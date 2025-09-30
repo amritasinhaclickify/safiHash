@@ -1,0 +1,732 @@
+<!-- templates/group_dashboard.html -->
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Co-op Group Dashboard</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+    <style>
+        .excel-card {
+            border: 1px solid #e5e7eb;
+        }
+
+        .excel-head {
+            background: #e8f2ff;
+            border-bottom: 1px solid #dbe2ea;
+        }
+
+        .excel-table th {
+            background: #e8f2ff;
+            border: 1px solid #dbe2ea;
+        }
+
+        .excel-table td {
+            background: #fff;
+            border: 1px solid #e6edf5;
+        }
+
+        .muted {
+            color: #6b7280;
+        }
+
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas;
+        }
+
+        .pill {
+            background: #f3f8ff;
+            border: 1px solid #e1ecff;
+            border-radius: 999px;
+            padding: .25rem .6rem;
+            font-size: .875rem;
+        }
+
+        .summary-card {
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body class="bg-white">
+    <!-- Top bar -->
+    <nav class="navbar navbar-light" style="background:#e8f2ff;border-bottom:1px solid #dbe2ea;">
+        <div class="container-fluid px-5">
+            <span class="navbar-brand mb-0 h1">Co-op Dashboard</span>
+            <div class="d-flex gap-2">
+                <a class="btn btn-outline-primary btn-sm" href="/chatbot">Open Chatbot</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-5 py-4">
+
+        <!-- Title & slug -->
+        <div class="row g-3 align-items-center mb-2">
+            <div class="col-md-8">
+                <h3 id="title" class="mb-0">Group</h3>
+                <div id="slugline" class="muted"></div>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <button id="copySlugBtn" class="btn btn-primary btn-sm">Copy Join Command</button>
+            </div>
+        </div>
+
+        <!-- 🔹 Summary cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card summary-card shadow-sm text-center p-3">
+                    <div class="muted">Vault Balance</div>
+                    <h5 id="sumBalance">—</h5>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card summary-card shadow-sm text-center p-3">
+                    <div class="muted">Members</div>
+                    <h5 id="sumMembers">—</h5>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card summary-card shadow-sm text-center p-3">
+                    <div class="muted">Active Loans</div>
+                    <h5 id="sumLoans">—</h5>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card summary-card shadow-sm text-center p-3">
+                    <div class="muted">Alerts</div>
+                    <h5 id="sumAlerts">—</h5>
+                </div>
+            </div>
+        </div>
+<!-- 🔹 Rules Section -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm p-3">
+            <h5 class="mb-3">📜 Group Rules</h5>
+            <div class="row text-center">
+                <div class="col-md-6">
+                    <div class="pill">Interest Rate</div>
+                    <h6 id="ruleInterest" class="mt-2">—</h6>
+                </div>
+                <div class="col-md-6">
+                    <div class="pill">Minimum Balance</div>
+                    <h6 id="ruleMinBalance" class="mt-2">—</h6>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+        <!-- 🔹 Tabs for details -->
+        <ul class="nav nav-tabs mb-3" id="groupTabs">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#membersTab">Members</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#depositsTab">Deposits</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#loansTab">Loans</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#votesTab">Voting</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#repaymentsTab">Repayments</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#ledgerTab">Ledger</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#alertsTab">Alerts</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#balancesTab">Balances</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#withdrawalsTab">Withdrawals</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#creditsTab">Credits</a></li>
+
+        </ul>
+
+        <div class="tab-content">
+            <!-- Members -->
+            <div class="tab-pane fade show active" id="membersTab">
+                <table class="table table-sm excel-table">
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Role</th>
+                            <th>Joined</th>
+                            <th class="text-center">Trust</th>
+                        </tr>
+                    </thead>
+                    <tbody id="membersBody">
+                        <tr>
+                            <td colspan="4">Loading…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Deposits -->
+            <div class="tab-pane fade" id="depositsTab">
+                <table class="table table-sm excel-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="depositsBody">
+                        <tr>
+                            <td colspan="3">Loading…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Balances -->
+            <div class="tab-pane fade" id="balancesTab">
+                <table class="table table-sm excel-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Total Deposit</th>
+                            <th>Interest</th>
+                            <th>Withdrawn</th>
+                            <th>Net Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="balancesBody">
+                        <tr>
+                            <td colspan="5">Loading…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Withdrawals -->
+            <div class="tab-pane fade" id="withdrawalsTab">
+                <table class="table table-sm excel-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Amount</th>
+                            <th>Interest</th>
+                            <th>Total Paid</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="withdrawalsBody">
+                        <tr>
+                            <td colspan="5">Loading…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Credits -->
+            <div class="tab-pane fade" id="creditsTab">
+                <table class="table table-sm excel-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>Loan</th>
+                            <th>Amount</th>
+                            <th>Source</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="creditsBody">
+                        <tr>
+                            <td colspan="6">Loading…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+
+            <!-- Loans -->
+            <div class="tab-pane fade" id="loansTab">
+                <table class="table table-sm excel-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="loansBody">
+                        <tr>
+                            <td colspan="4">Loading…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Voting -->
+            <div class="tab-pane fade" id="votesTab">
+                <table class="table table-sm excel-table">
+                    <thead>
+                        <tr>
+                            <th>Loan ID</th>
+                            <th>Yes</th>
+                            <th>No</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="votesBody">
+                        <tr>
+                            <td colspan="4">Loading…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+<!-- Repayments -->
+<div class="tab-pane fade" id="repaymentsTab">
+    <table class="table table-sm excel-table">
+        <thead>
+            <tr>
+                <th>Loan</th>
+                <th>User</th>
+                <th>Amount</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody id="repaymentsBody">
+            <tr>
+                <td colspan="4">Loading…</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+            <!-- Ledger -->
+            <div class="tab-pane fade" id="ledgerTab">
+                <table class="table table-sm excel-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>User</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ledgerBody">
+                        <tr>
+                            <td colspan="4">Loading…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Alerts -->
+            <div class="tab-pane fade" id="alertsTab">
+                <table class="table table-sm excel-table">
+                    <thead>
+                        <tr>
+                            <th>Message</th>
+                            <th>Level</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alertsBody">
+                        <tr>
+                            <td colspan="3">Loading…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const SLUG = {{ slug | tojson or 'null' }};
+if (!SLUG || SLUG === 'null') {
+    alert('Group slug missing');
+    throw new Error('Group slug missing');
+}
+
+const token = localStorage.getItem('jwt_token');
+
+async function authFetch(url, opts = {}) {
+    const token = localStorage.getItem('jwt_token');
+
+    if (!token || token.split('.').length !== 3) {
+        // JWT missing or invalid format
+        alert("⚠️ Invalid or missing login. Please login again.");
+        localStorage.removeItem('jwt_token');
+        window.location.href = "/api/users/auth";
+        return null;
+    }
+
+    const res = await fetch(url, {
+        ...opts,
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            ...(opts.headers || {})
+        }
+    });
+
+    if (res.status === 401) {
+        alert("Please login again");
+        localStorage.removeItem('jwt_token');
+        window.location.href = "/api/users/auth";
+        return null;
+    }
+
+    return res;
+}
+
+
+function fmtDate(d) {
+    if (!d) return "—";
+    return new Date(d).toLocaleString();
+}
+</script>
+
+<!-- 2. Load Group -->
+<script>
+async function loadGroup() {
+    const res = await authFetch(`/api/coops/${SLUG}`);
+    if (!res) return;
+    const data = await res.json();
+    if (data.error) {
+        alert(data.error);
+        return;
+    }
+
+    const g = data.group;
+    document.getElementById("title").textContent = g.name;
+    document.getElementById("slugline").innerHTML =
+    `Slug: <span class="mono">${g.slug}</span><br>Vault: <span class="mono">${g.cooperative_account_id || "—"}</span>`;
+    
+
+
+    // 🔹 Save group_id globally
+    window.GROUP_ID = g.id;
+
+// ✅ Rules display
+if (g.rules) {
+    document.getElementById("ruleInterest").textContent =
+        g.rules.interest_rate ? `${g.rules.interest_rate.toFixed(2)}% per year` : "—";
+    document.getElementById("ruleMinBalance").textContent =
+        g.rules.min_balance ? `${g.rules.min_balance} BHC` : "—";
+}
+
+
+// Render members with Trust button, and open Trust Dashboard on click
+const body = document.getElementById("membersBody");
+body.innerHTML = "";
+(g.members || []).forEach(m => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+        <td class="mono">${m.user_id}</td>
+        <td>${m.role}</td>
+        <td>${m.joined_at}</td>
+        <td class="text-center">
+            <button class="btn btn-sm btn-outline-primary trust-btn" data-user-id="${m.user_id}">
+                <i class="bi bi-shield-lock"></i> Trust
+            </button>
+        </td>
+    `;
+    body.appendChild(tr);
+});
+
+document.getElementById("sumMembers").textContent = g.members.length;
+
+document.addEventListener('click', function(e){
+    const btn = e.target.closest('.trust-btn');
+    if (!btn) return;
+    const userId = btn.getAttribute('data-user-id');
+    window.location.href = `/group/${SLUG}/member/${userId}/trust`;
+});
+
+
+    // Copy join command
+    const copyBtn = document.getElementById("copySlugBtn");
+    copyBtn.onclick = () => {
+        navigator.clipboard.writeText(`join group ${g.slug}`);
+        copyBtn.textContent = "Copied!";
+        setTimeout(() => copyBtn.textContent = "Copy Join Command", 1200);
+    };
+
+    loadBalance();
+    loadDeposits();
+    loadLoans();
+    loadVotes();
+    loadRepayments();
+    loadLedger();
+    loadAlerts();
+    loadBalances();
+    loadWithdrawals();
+    loadCredits();
+}
+</script>
+
+<!-- 3. Vault Balance -->
+<script>
+async function loadBalance() {
+    const res = await authFetch(`/api/coops/${SLUG}/balance`);
+    if (!res) return;
+    const b = await res.json();
+    const bhcPart = (b.bhc && b.bhc.display != null) ? `${b.bhc.display} BHC` : "—";
+    document.getElementById("sumBalance").textContent = bhcPart;
+}
+</script>
+
+<!-- 4. Deposits -->
+<script>
+async function loadDeposits() {
+    const res = await authFetch(`/api/coops/${SLUG}/deposits`);
+    if (!res) return;
+    const rows = await res.json();
+    const body = document.getElementById("depositsBody");
+    body.innerHTML = "";
+
+    if (rows.length === 0) {
+        body.innerHTML = `<tr><td colspan="3">No deposits yet</td></tr>`;
+        return;
+    }
+
+    rows.forEach(d => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${d.user_id}</td>
+            <td>${d.amount}</td>
+            <td>${fmtDate(d.created_at)}</td>
+        `;
+        body.appendChild(tr);
+    });
+}
+</script>
+
+<!-- 5. Loans -->
+<script>
+async function loadLoans() {
+    const res = await authFetch(`/api/coops/${SLUG}/loans`);
+    if (!res) return;
+    const rows = await res.json();
+    const body = document.getElementById("loansBody");
+    body.innerHTML = "";
+
+    rows.forEach(l => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${l.user_id}</td>
+            <td>${l.amount}</td>
+            <td>${l.status}</td>
+            <td>${fmtDate(l.created_at)}</td>
+        `;
+        body.appendChild(tr);
+    });
+
+    document.getElementById("sumLoans").textContent =
+        rows.filter(r => r.status === "approved").length;
+}
+</script>
+
+<!-- 6. Votes -->
+<script>
+async function loadVotes() {
+    const res = await authFetch(`/api/coops/${SLUG}/votes`);
+    if (!res) return;
+    const rows = await res.json();
+    const body = document.getElementById("votesBody");
+    body.innerHTML = "";
+
+    rows.forEach(v => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${v.loan_request_id}</td>
+            <td>${v.yes}</td>
+            <td>${v.no}</td>
+            <td>${v.status}</td>
+        `;
+        body.appendChild(tr);
+    });
+}
+</script>
+
+<!-- 7. Repayments (fixed) -->
+<script>
+async function loadRepayments() {
+  try {
+    const res = await authFetch(`/api/coops/${SLUG}/repayments`);
+    if (!res) return;
+    const rows = await res.json();
+    const body = document.getElementById("repaymentsBody");
+    body.innerHTML = "";
+
+    if (!rows || rows.length === 0) {
+      body.innerHTML = `<tr><td colspan="4">No repayments yet</td></tr>`;
+      return;
+    }
+
+    rows.forEach(r => {
+      const loanId = r.loan_id ?? "-";
+      const payer = r.payer_id ?? "-";
+      const amount = (typeof r.amount === "number") ? r.amount : parseFloat(r.amount || 0);
+      const created = r.created_at ? new Date(r.created_at) : null;
+      const dateStr = created ? created.toLocaleString() : "-";
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${loanId}</td>
+        <td>${payer}</td>
+        <td>${amount.toFixed(2)} BHC</td>
+        <td>${dateStr}</td>
+      `;
+      body.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("loadRepayments error", err);
+    const body = document.getElementById("repaymentsBody");
+    if (body) body.innerHTML = `<tr><td colspan="4">Error loading repayments</td></tr>`;
+  }
+}
+</script>
+
+
+<!-- 8. Ledger + Alerts -->
+<script>
+async function loadLedger() {
+    const res = await authFetch(`/api/coops/${SLUG}/ledger`);
+    if (!res) return;
+    const rows = await res.json();
+    const body = document.getElementById("ledgerBody");
+    body.innerHTML = "";
+
+    rows.forEach(tx => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${tx.ref_type}</td>
+            <td>${tx.user_id}</td>
+            <td>${tx.amount}</td>
+            <td>${fmtDate(tx.created_at)}</td>
+        `;
+        body.appendChild(tr);
+    });
+}
+
+async function loadAlerts() {
+    const res = await authFetch(`/api/coops/${SLUG}/alerts`);
+    if (!res) return;
+    const rows = await res.json();
+    const body = document.getElementById("alertsBody");
+    body.innerHTML = "";
+
+    rows.forEach(a => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${a.message}</td>
+            <td>${a.level}</td>
+            <td>${fmtDate(a.created_at)}</td>
+        `;
+        body.appendChild(tr);
+    });
+
+    document.getElementById("sumAlerts").textContent = rows.length;
+}
+</script>
+
+<!-- 9. Balances + Withdrawals -->
+<script>
+async function loadBalances() {
+    const res = await authFetch(`/api/coops/${SLUG}/balances`);
+    if (!res) return;
+    const rows = await res.json();
+    const body = document.getElementById("balancesBody");
+    body.innerHTML = "";
+
+    if (!rows || rows.length === 0) {
+        body.innerHTML = `<tr><td colspan="5">No balance found</td></tr>`;
+        return;
+    }
+
+    rows.forEach(b => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${b.user_id}</td>
+            <td>${Number(b.total_deposit || 0).toFixed(2)}</td>
+            <td>${Number(b.interest_earned || 0).toFixed(2)}</td>
+            <td>${Number(b.total_withdrawn || 0).toFixed(2)}</td>
+            <td>${Number(b.net_balance || 0).toFixed(2)}</td>
+        `;
+        body.appendChild(tr);
+    });
+}
+
+async function loadWithdrawals() {
+    const res = await authFetch(`/api/coops/${SLUG}/withdrawals`);
+    if (!res) return;
+    const rows = await res.json();
+    const body = document.getElementById("withdrawalsBody");
+    body.innerHTML = "";
+
+    if (!rows || rows.length === 0) {
+        body.innerHTML = `<tr><td colspan="5">No withdrawals yet</td></tr>`;
+        return;
+    }
+
+    rows.forEach(w => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${w.user_id}</td>
+            <td>${Number(w.amount || 0).toFixed(2)}</td>
+            <td>${(w.interest === null || w.interest === undefined) ? "—" : Number(w.interest).toFixed(2)}</td>
+            <td>${Number(w.total_paid || 0).toFixed(2)}</td>
+            <td>${fmtDate(w.created_at)}</td>
+        `;
+        body.appendChild(tr);
+    });
+}
+</script>
+
+
+<!-- 10. Credits + Init -->
+<script>
+// ---------- Credits ----------
+async function loadCredits() {
+    if (!window.GROUP_ID) {
+        console.error("Group ID not loaded yet");
+        return;
+    }
+    const res = await authFetch(`/api/coops/admin/group/${window.GROUP_ID}/credits`);
+    if (!res) return;
+    const rows = await res.json();
+    const body = document.getElementById("creditsBody");
+    body.innerHTML = "";
+
+    if (!Array.isArray(rows) || rows.length === 0) {
+        body.innerHTML = `<tr><td colspan="6">No credits yet</td></tr>`;
+        return;
+    }
+
+    rows.forEach(c => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${c.id}</td>
+            <td>${c.user_id}</td>
+            <td>${c.loan_id || "-"}</td>
+            <td>${c.amount}</td>
+            <td>${c.source}</td>
+            <td>${fmtDate(c.created_at)}</td>
+        `;
+        body.appendChild(tr);
+    });
+}
+
+// ---------- Init ----------
+(async function init() {
+    if (!token) {
+        window.location.href = "/api/users/auth";
+        return;
+    }
+    await loadGroup();
+})();
+</script>
+
+
+
+
+</body>
+
+</html>

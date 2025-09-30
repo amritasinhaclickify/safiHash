@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SafiHash — Documentation</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; padding:24px; }
+    pre.code { background:#0b1220; color:#e6f1ff; padding:12px; border-radius:6px; overflow:auto; }
+    .muted { color:#6c757d; }
+    .pill { display:inline-block; padding:.25rem .6rem; background:#f1f5f9; border-radius:999px; font-size:.85rem; }
+    .section { margin-bottom:28px; }
+    .kbd { background:#eef2ff; padding:.15rem .4rem; border-radius:.35rem; font-family:monospace; }
+    .dark { background:#0f1724; color:#e6eef8; padding:10px; border-radius:6px; }
+    .warn { color:#b45309; font-weight:600; }
+    .ok { color:#065f46; font-weight:600; }
+  </style>
+</head>
+<body>
+  <div class="container">
+<div class="mb-4">
+<h1 class="h3">SafiHash — Step-by-Step Guide</h1>
+  <p class="muted mb-2">
+    <strong>Goal:</strong> Show how <strong>co-operative lending groups</strong> can run safely and transparently using 
+    <strong>Hedera services</strong>. Judges will experience how the <strong>Trust Score</strong> tracks deposits, loans, 
+    repayments, and voting — making group finance reliable, tamper-proof, and fair.
+  </p>
+  <p class="muted">
+    This step-by-step guide ensures judges can explore the demo smoothly, without needing extra instructions.
+  </p>
+
+  <a class="btn btn-outline-primary btn-sm mt-2" href="/">⬅ Back to app</a>
+</div>
+
+<!-- Overview -->
+<div class="section">
+  <h4>Overview</h4>
+  <p class="muted">
+    SafiHash is a demo community-lending platform built on <strong>Hedera Hashgraph</strong>. 
+    It uses <strong>HFS</strong> for KYC storage, <strong>HTS</strong> for token flows (BHC token), 
+    and integrates <strong>Smart Contracts & Consensus</strong> to maintain a tamper-proof Trust Score.  
+    All actions — from deposits and withdrawals to loan requests and repayments — are managed through a 
+    <strong>chat-based command interface</strong>.
+  </p>
+</div>
+
+   <!-- Hedera components (dark style) -->
+<div class="section">
+  <h4>Hedera components used (what & why)</h4>
+  <div class="dark">
+    <ul>
+      <li><strong>Hedera Accounts</strong> — wallets for each <em>user</em> and each <em>group (cooperative)</em>. Used for HTS transfers and identity on-chain.</li>
+      <li><strong>Hedera File Service (HFS)</strong> — store KYC documents and file hashes to ensure tamper-evidence.</li>
+      <li><strong>Hedera Token Service (HTS)</strong> — the demo's internal token <code>BHC</code> (not native HBAR). BHC is used for deposits, withdrawals, loans and repayments.</li>
+      <li><strong>HBAR</strong> — used for transaction fees on Hedera. Your operator account must hold enough HBAR to pay fees for HTS and HFS operations.</li>
+      <li><strong>Consensus Service (HCS)</strong> — records <em>KYC proofs, loan/voting events, repayments, and trust score updates</em>. Every critical action emits a consensus message, providing tamper-proof ordering, auditability, and transparency for all co-op activities.</li>
+      <li><strong>Smart Contract (Trust Score module)</strong> — trust score calculation and core scoring rules are implemented in a Hedera smart contract (on-chain business logic). The app reads/writes score events to that contract and uses consensus/audit logs for transparency.</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- Bank admin QR -> Buy BHC: updated demo flow -->
+<div class="section">
+  <h4>Bank Admin: Buy BHC (HBAR → BHC Conversion)</h4>
+
+  <ul>
+    <li><strong>KYC Flow</strong> → Users are auto-verified when judges test (manual option also exists). Once KYC data is submitted, the account is activated.</li>
+    <li><strong>Phone + M-Pesa</strong> → User registers their phone number, then pays in KES via M-Pesa sandbox to buy HBAR.</li>
+    <li><strong>Token Minting</strong> → The payment mints BHC (our stable utility token) into the user’s Hedera wallet.</li>
+    <li><strong>Admin Role</strong> → From the Bank Admin panel, BHC can also be manually credited (minted/transferred) for demo or override cases.</li>
+    <li><strong>Usage</strong> → Credited BHC is available for deposit, withdrawal, loans, and repayments inside groups via chat commands.</li>
+  </ul>
+
+  <p class="muted">
+    <strong>Judges:</strong> For quick testing, auto-KYC and M-Pesa sandbox ensure users can register, pay, and instantly receive BHC.
+  </p>
+</div>
+
+
+ <!-- Commands usage flow -->
+<div class="section">
+  <h4>Using the Commands (with a pre-verified test user)</h4>
+  <p class="muted">
+    Judges can log in with one of the 10 provided <strong>KYC-verified test users</strong>. 
+    Below is the flow showing how such a user can explore the full demo. 
+    You may also create new users, but note that <strong>KYCs must be approved manually by admin</strong>.
+  </p>
+
+  <ol>
+    <li>
+      <strong>Check account & balance</strong><br>
+      After login, type:
+      <pre class="code">wallet</pre>
+      This shows the user’s current BHC balance on Hedera (via HTS).
+    </li>
+        <li>
+      <strong>Check KYC status</strong><br>
+      Type:
+      <pre class="code">kyc status</pre>
+      Displays whether your account is <code>verified</code> or not.
+    </li>
+<li>
+  <strong>Submit KYC</strong><br>
+  Users submit their KYC by sending text details <em>and attaching a file</em> for verification:
+  
+  <p><strong>Example (text + file):</strong></p>
+  <pre class="code">kyc Name John Doe ID GH123456 Janam 1990-05-20 [attach file]</pre>
+  <p>
+    Sends KYC details directly in chat and uploads a document (e.g., .txt) for verification. 
+    Admin approves if manual KYC is enabled; auto-KYC may instantly verify judges’ test accounts.
+  </p>
+</li>
+
+
+
+    <li>
+      <strong>Create a new cooperative group</strong><br>
+      Example:
+      <pre class="code">create group Farmers Union interest 0.1 minbalance 50 profit_reserve 10</pre>
+      This sets up a group with 10% annual interest, a minimum balance of 50 BHC, 
+      and a 10% reserve for profits.
+    </li>
+
+    <li>
+      <strong>Join group (by slug)</strong><br>
+      Other test users can join using:
+      <pre class="code">join group farmers-union-123abc</pre>
+      Each group is identified by its unique <code>slug</code>.
+    </li>
+
+    <li>
+      <strong>Deposit and withdraw</strong><br>
+      Members can add funds or check group balance:
+      <pre class="code">deposit 100 bhc farmers-union-123abc
+my balance farmers-union-123abc
+withdraw 20 farmers-union-123abc</pre>
+    </li>
+
+    <li>
+      <strong>Loan request & voting</strong><br>
+      A member can request a loan:
+      <pre class="code">loan farmers-union-123abc 500 seeds purchase</pre>
+      Other members vote:
+      <pre class="code">vote 7 yes
+vote 7 no</pre>
+      If approved, admins disburse:
+      <pre class="code">disburse 7</pre>
+    </li>
+
+    <li>
+      <strong>Repayments</strong><br>
+      Borrower repays:
+      <pre class="code">repay 7 200</pre>
+      If repayment is by another member (third-party), admin must approve:
+      <pre class="code">approve payment 12</pre>
+    </li>
+
+    <li>
+      <strong>Trust Score & Alerts</strong><br>
+      Each user’s performance is tracked by a Hedera smart contract.<br>
+      Examples:
+      <pre class="code">trustscore me
+trustscore 25
+alerts farmers-union-123abc</pre>
+      Trust Score considers deposits, loan repayments, voting, and consistency.
+    </li>
+  </ol>
+</div>
+
+
+    <!-- Interest -->
+    <div class="section">
+      <h4>Interest & profit rules</h4>
+      <ul>
+        <li><strong>Group interest rate</strong> — set at group creation (APY e.g. 0.10 = 10%). Used to compute monthly interest for loans and deposit accruals.</li>
+        <li><strong>Deposit holding period</strong> — deposits generally must be held 6 months before withdrawal (configurable per group).</li>
+        <li><strong>Profit reserve</strong> — a percentage of interest can be parked into a group's profit pool if <code>distribute_on_profit</code> is enabled; admins distribute later.</li>
+        <li><strong>Admin cut</strong> — administrator fee percentage can be configured at group creation.</li>
+      </ul>
+    </div>
+
+<!-- Trust score -->
+<div class="section">
+  <h4>Trust Score (on-chain / smart contract)</h4>
+  <p class="muted">
+    The Trust Score is computed by logic implemented in a <strong>Hedera smart contract</strong> module. High-level details:
+  </p>
+  <ul>
+    <li>Score inputs: deposit history, repayment timeliness, voting participation, dispute history, and admin flags.</li>
+    <li>Computation: on relevant events (repayment recorded, deposit made, vote closed), the app writes an event / invokes the Trust Score contract which updates the user's score component.</li>
+    <li>Transparency: score changes are auditable because updates are recorded on Hedera (contract events + consensus logs).</li>
+  </ul>
+
+  <p>In the UI you can check score via:</p>
+  <pre class="code">
+trustscore me
+trustscore &lt;user_id&gt;
+  </pre>
+
+  <p class="muted">
+    Members can view each other’s Trust Score by clicking the <strong>Trust</strong> button. 
+    This helps guide voting and must be checked before the admin issues any loans. <br>
+    Admins can push Trust Score to the smart contract using:
+    <pre class="code">push trustscore &lt;user_id&gt; &lt;group_slug&gt;</pre>
+    Example: <code>push trustscore 15 my-coop-group</code>
+  </p>
+</div>
+
+
+<!-- Test users -->
+<div class="section">
+  <h4>Test accounts (10 pre-verified users)</h4>
+  <p class="muted">
+    Judges will be given these 10 accounts (already KYC = <code>verified</code>) so they can exercise all flows. Replace placeholder passwords with the real ones you distribute if needed.
+  </p>
+
+  <pre class="code">
+testuser01@example.com    / testuser01
+testuser02@example.com    / testuser02
+testuser03@example.com    / testuser03
+testuser04@example.com    / testuser04
+testuser05@example.com    / testuser05
+testuser06@example.com    / testuser06
+testuser07@example.com    / testuser07
+testuser08@example.com    / testuser08
+testuser09@example.com    / testuser09
+testuser10@example.com    / testuser10
+  </pre>
+
+  <p class="warn">
+    Note: These 10 accounts are provided to judges with KYC already set to <code>verified</code> for testing. 
+    The system supports both <strong>auto</strong> and <strong>manual</strong> KYC flows — new accounts can be auto-verified (useful for judges) or submitted for manual review by an admin. 
+    Until an account's KYC is <code>verified</code>, it cannot deposit, join groups, or request loans.
+  </p>
+</div>
+
+
+    <!-- Troubleshooting -->
+    <div class="section">
+      <h4>Troubleshooting & FAQs</h4>
+      <ul>
+        <li><strong>Q:</strong> My HTS transfer fails — what to check?<br>
+            <strong>A:</strong> Verify operator has enough HBAR for fees, recipient account is token-associated (use <code>ensure_token_ready_for_account</code>), token_id and decimals correct.</li>
+        <li><strong>Q:</strong> KYC upload returned hash mismatch — what to do?<br>
+            <strong>A:</strong> Re-upload file; ensure file saved to local disk before upload; check HFS upload returned hash against local sha256.</li>
+        <li><strong>Q:</strong> Third-party repayment stuck as pending?<br>
+            <strong>A:</strong> Admin must approve via <code>approve payment &lt;repayment_id&gt;</code>.</li>
+      </ul>
+    </div>
+
+    <footer class="mt-5 mb-5 muted">
+      <div>All operations requiring private keys or HTS transfers must run server-side (never put keys in browser). If you want the seed script or server callback snippets later, ask but note they are optional — this doc is sufficient to run the demo. — SafiHash Docs</div>
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,48 @@
+
+/* static/css/dashboard.css */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+#wallet-balance,
+#trust-score {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #343a40;
+}
+
+#dashboard-notifications div {
+    padding: 8px 0;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 0.95rem;
+}
+
+#dashboard-notifications strong {
+    color: #000;
+}
+
+.btn-lg {
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.btn-lg:hover {
+    transform: scale(1.05);
+    background-color: #0a58ca;
+}

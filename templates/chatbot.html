@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SafiHash Chatbot</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Your custom stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/chatbot.css') }}">
+
+  <!-- Only the small custom CSS you asked for (kept minimal) -->
+  <style>
+    body { background: #fff;  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  font-size: 16px; /* base size */
+  line-height: 1.5;
+  color: #111827; }         /* as you requested */
+    .navbar { background: #e8f2ff; border-bottom: 1px solid #dbe2ea;}
+    /* keep other layout-specific inline styles minimal and non-conflicting */
+    #chat-box { max-height: 300px; overflow-y: auto; }
+    #notification-box { max-height: 200px; overflow-y: auto; }
+    .left-sidebar {
+  border-right: 1px solid #e6edf5;
+  min-height: 100%;
+  padding-top: 0.5rem;
+}
+
+
+  </style>
+</head>
+<body>
+
+      <!-- Top bar -->
+    <nav class="navbar navbar-light">
+        <div class="container-fluid px-5">
+            <span class="navbar-brand mb-0 h1">SafiHash</span>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-danger btn-sm" id="logout-btn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+  <div class="container-fluid px-5 mt-4">
+    <div class="row">
+<!-- 📌 Left Sidebar START -->
+<div class="col-md-3">
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-header fw-bold text-center">
+      🆔 Hedera ID
+    </div>
+    <div class="card-body text-center">
+      <div id="sidebar-hedera-id" class="fw-bold">—</div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-header fw-bold">
+      ➕ Add Payment Number
+    </div>
+    <div class="card-body">
+      <input type="text" id="config-name" class="form-control mb-2" placeholder="Name (e.g. username)">
+      <input type="text" id="config-number" class="form-control mb-2" placeholder="M-Pesa Number (e.g. 254700000001)">
+      <input type="text" id="config-hedera" class="form-control mb-2" placeholder="Hedera Account ID (0.0.x)">
+      <button class="btn btn-primary w-100" onclick="addPaymentConfig()">Add Config</button>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-header fw-bold">💳 Purchase BHC (Pay via M-Pesa)</div>
+    <div class="card-body">
+
+      <!-- Create Order row -->
+      <div class="mb-3">
+        <label class="form-label">Create Order (quick)</label>
+        <div class="input-group">
+          <input id="create-msisdn" class="form-control" placeholder="Your M-Pesa number e.g. 254700000009">
+          <input id="create-amount" class="form-control" placeholder="Amount (KES) e.g. 100">
+          <button id="create-order-btn" class="btn btn-outline-primary">Create Order</button>
+        </div>
+        <div id="create-order-msg" class="form-text text-muted"></div>
+      </div>
+
+      <form id="payment-form">
+        <div class="mb-3">
+          <label class="form-label">Agency Phone Number (system auto-filled)</label>
+          <input type="text" class="form-control" id="agency-number" value="" readonly>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Your M-Pesa Number</label>
+          <input type="text" class="form-control" id="user-msisdn" placeholder="e.g. 254700000001" required>
+        </div>
+
+        <div class="mb-3">
+        <label class="form-label">Amount (KES) (⚖️ 1 KES = 1 BHC)</label>
+          <input type="number" step="0.01" class="form-control" id="payment-amount" placeholder="100" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">M-Pesa Transaction Ref</label>
+          <input type="text" class="form-control" id="mpesa-ref" placeholder="NLJ7RT61SV" required>
+          <div class="form-text">(Sandbox: you may keep <code>NLJ7RT61SV</code> for testing)</div>
+        </div>
+
+        <!-- Order ID hidden -->
+        <input type="hidden" id="order-id" value="">
+
+        <button type="submit" class="btn btn-primary w-100">✅ Confirm Payment</button>
+      </form>
+
+      <div id="payment-result" class="mt-3"></div>
+    </div>
+  </div>
+
+</div>
+<!-- 📌 Left Sidebar END -->
+
+
+      <div class="col-md-6">
+        <div class="card mb-4 shadow-sm">
+          <div class="card-header text-center fw-bold fs-5">
+            SafiHash Assistant 🤖
+          </div>
+
+          <div class="card-body">
+            <div id="chat-box" class="chat-box mb-3">
+              <div class="chat-message bot">Hello! I am SafiHash Assistant.</div>
+            </div>
+
+           <!-- Replace your input-group with this -->
+<div class="row g-2 align-items-center mb-3">
+  <!-- Text input: takes remaining width on md+ screens -->
+  <div class="col-12 col-md">
+    <input type="text"
+           id="user-input"
+           class="form-control"
+           placeholder="Type your message..."
+           aria-label="Message">
+  </div>
+
+  <!-- File picker: fixed min-width on larger screens, full width on mobile -->
+  <div class="col-12 col-md-auto">
+    <input type="file"
+           id="kyc-file"
+           class="form-control form-control-sm"
+           style="min-width:160px; max-width:220px;"
+           aria-label="Upload KYC">
+  </div>
+
+  <!-- Send button: full width on mobile, auto width on larger screens -->
+  <div class="col-12 col-md-auto">
+    <button onclick="sendMessage()" class="btn btn-success w-100">Send</button>
+  </div>
+</div>
+
+
+            <!-- Notifications -->
+            <div id="notification-box" class="alert alert-secondary p-2">
+              <h6 class="mb-2">🔔 Notifications</h6>
+            </div>
+          </div> <!-- card-body -->
+        </div> <!-- card -->
+      </div> <!-- col -->
+<!-- 📌 Sidebar column START (copy-paste ready; all styles inline — no external CSS) -->
+<div class="col-md-3">
+
+  <h5 class="mb-3 text-center">📖 Chat Commands Guidelines</h5>
+
+  <div class="accordion" id="commandSidebar">
+
+<!-- User Account & KYC Management (Collapsed by default) -->
+<div class="accordion-item">
+  <h2 class="accordion-header" id="headingKyc">
+    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseKyc">
+      🧾 User Account & KYC Management
+    </button>
+  </h2>
+  <div id="collapseKyc" class="accordion-collapse collapse" data-bs-parent="#commandSidebar">
+    <div class="accordion-body small">
+      <ul class="list-unstyled" style="padding-left:0; margin:0;">
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">help</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. help</div>
+        </li>
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">wallet / balance</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. wallet</div>
+        </li>
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">kyc status</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. kyc status</div>
+        </li>
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">kyc (text submit)</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. kyc Name John Doe ID GH123456 Janam 1990-05-20</div>
+        </li>
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">kyc (file upload)</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. kyc [attach file]</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div> 
+
+<!-- 👥 Cooperative Group Setup & Membership ✅ -->
+<div class="accordion-item">
+  <h2 class="accordion-header" id="headingGroup">
+    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGroup">
+      👥 Cooperative Group Setup & Membership 
+    </button>
+  </h2>
+  <div id="collapseGroup" class="accordion-collapse collapse" data-bs-parent="#commandSidebar">
+    <div class="accordion-body small">
+      <ul class="list-unstyled" style="padding-left:0; margin:0;">
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">create group &lt;name&gt; [interest &lt;rate&gt;] [minbalance &lt;amt&gt;] [profit_reserve &lt;pct&gt;] [admin_cut &lt;pct&gt;] [distribute_on_profit &lt;true|false&gt;]</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. create group Faith Trust interest 12 minbalance 50 profit_reserve 10 admin_cut 2 distribute_on_profit true</div>
+        </li>
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">join group &lt;slug&gt;</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. join group faith-trust-1a2b3c</div>
+        </li>
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">my groups</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. my groups</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+
+ <!-- Group Deposits & Balance -->
+<div class="accordion-item">
+  <h2 class="accordion-header" id="headingDeposits">
+    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDeposits">
+      💰 Group Deposits & Balance
+    </button>
+  </h2>
+  <div id="collapseDeposits" class="accordion-collapse collapse" data-bs-parent="#commandSidebar">
+    <div class="accordion-body small">
+      <ul class="list-unstyled" style="padding-left:0; margin:0;">
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">deposit &lt;amount&gt; bhc &lt;slug&gt;</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. deposit 100 bhc farmers123</div>
+        </li>
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">withdraw &lt;amount&gt; &lt;slug&gt;</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. withdraw 50 farmers123</div>
+        </li>
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">my balance &lt;group_slug&gt;</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. my balance farmers123</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Loan & Voting Commands -->
+<div class="accordion-item">
+  <h2 class="accordion-header" id="headingLoan">
+    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLoan">
+      📌 Loan & Voting
+    </button>
+  </h2>
+  <div id="collapseLoan" class="accordion-collapse collapse" data-bs-parent="#commandSidebar">
+    <div class="accordion-body small">
+      <ul class="list-unstyled" style="padding-left:0; margin:0;">
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">loan &lt;slug&gt; &lt;amount&gt; [purpose]</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. loan farmers123 2000 seeds purchase</div>
+        </li>
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">vote &lt;loan_request_id&gt; yes</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. vote 5 yes</div>
+        </li>
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">vote &lt;loan_request_id&gt; no</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. vote 5 no</div>
+        </li>
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">disburse &lt;loan_request_id&gt;</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. disburse 5</div>
+        </li>
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">repay &lt;loan_request_id&gt; &lt;amount&gt;</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. repay 5 500</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Admin Approval (Third-Party Repayments) -->
+<div class="accordion-item">
+  <h2 class="accordion-header" id="headingApproval">
+    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseApproval">
+      👮 Admin Approval (Third-Party Repayments)
+    </button>
+  </h2>
+  <div id="collapseApproval" class="accordion-collapse collapse" data-bs-parent="#commandSidebar">
+    <div class="accordion-body small">
+      <ul class="list-unstyled" style="padding-left:0; margin:0;">
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">approve payment &lt;repayment_id&gt;</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. approve payment 12</div>
+        </li>
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">reject payment &lt;repayment_id&gt;</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. reject payment 12</div>
+        </li>
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">pending payments</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. pending payments</div>
+        </li>
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">list pending payments</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. list pending payments</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Admin: Credits -->
+<div class="accordion-item">
+  <h2 class="accordion-header" id="headingCredits">
+    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCredits">
+      💳 Admin: Credits
+    </button>
+  </h2>
+  <div id="collapseCredits" class="accordion-collapse collapse" data-bs-parent="#commandSidebar">
+    <div class="accordion-body small">
+      <ul class="list-unstyled" style="padding-left:0; margin:0;">
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">credits &lt;group_id&gt;</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. credits 3</div>
+        </li>
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">apply credit &lt;credit_id&gt; &lt;loan_id&gt; &lt;amount&gt;</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. apply credit 7 5 300</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Trust & Alerts -->
+<div class="accordion-item">
+  <h2 class="accordion-header" id="headingTrust">
+    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTrust">
+      📊 Trust & Alerts
+    </button>
+  </h2>
+  <div id="collapseTrust" class="accordion-collapse collapse" data-bs-parent="#commandSidebar">
+    <div class="accordion-body small">
+      <ul class="list-unstyled" style="padding-left:0; margin:0;">
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">trustscore me</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. trustscore me</div>
+        </li>
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">trustscore &lt;user_id&gt;</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. trustscore 101</div>
+        </li>
+        <li style="margin-bottom:12px;">
+          <div style="font-family:monospace;">alerts &lt;group_slug&gt;</div>
+          <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. alerts farmers123</div>
+        </li>
+        <li style="margin-bottom:12px;">
+  <div style="font-family:monospace;">push trustscore &lt;user_id&gt; &lt;group_slug&gt;</div>
+  <div style="color:#777; font-size:0.85rem; margin-top:4px;">ex. push trustscore 15 my-coop-group</div>
+</li>
+
+        
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- 📌 Sidebar column END -->
+
+
+    </div> <!-- row -->
+  </div>
+    <!-- ✅ JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+    <script>
+        const backendURL = "http://127.0.0.1:5000";
+
+        // ✅ Page load par JWT verify karo
+        document.addEventListener("DOMContentLoaded", async () => {
+            const token = localStorage.getItem("jwt_token");
+            if (!token) {
+                alert("Please login first.");
+                window.location.href = "/api/users/auth";
+                return;
+            }
+
+            let res = await fetch(`${backendURL}/api/users/me`, {
+                method: "GET",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+
+            if (!res.ok) {
+                alert("Session expired. Please login again.");
+                localStorage.removeItem("jwt_token");
+                window.location.href = "/api/users/auth";
+                return;
+            }
+
+            let user = await res.json();
+            window.loggedInUserId = user.id;
+
+            document.querySelector(".card-header").innerHTML =
+                `🆔 Hedera ID - <span class="text-warning">${user.username}</span>`;
+
+            // ✅ Greeting in chat
+            document.getElementById("chat-box").innerHTML +=
+                  `<div class="chat-message bot">
+       👋 Hello ${user.username}!  
+       All available commands are now listed in the <b>sidebar</b> 👉  
+       (expand a section to explore).  
+     </div>`;    
+        });
+
+        // ✅ Logout handler
+        document.getElementById("logout-btn").addEventListener("click", async () => {
+            try {
+                await fetch(`${backendURL}/api/users/logout`, { method: "POST", credentials: "include" });
+            } catch (err) {
+                console.error("Logout API failed", err);
+            }
+            localStorage.removeItem("jwt_token");
+            window.location.href = "/api/users/auth";
+        });
+
+
+    </script>
+   <script>
+async function addPaymentConfig() {
+  const token = localStorage.getItem("jwt_token");
+  const name = document.getElementById("config-name").value.trim();
+  const mpesa_number = document.getElementById("config-number").value.trim();
+  const hedera_account_id = document.getElementById("config-hedera").value.trim();
+
+  if (!name || !mpesa_number || !hedera_account_id) {
+    alert("⚠️ All fields are required");
+    return;
+  }
+
+  // ✅ Local duplicate check (fetch existing configs)
+  let existing = await fetch(`${backendURL}/api/payments/config/list`, {
+    headers: { "Authorization": `Bearer ${token}` }
+  }).then(r => r.ok ? r.json() : []);
+  
+  if (Array.isArray(existing)) {
+    let found = existing.find(c => c.mpesa_number === mpesa_number);
+    if (found) {
+      alert("⚠️ This M-Pesa number is already registered!");
+      return;
+    }
+  }
+
+  // ✅ Backend request
+  let res = await fetch(`${backendURL}/api/payments/config/add`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ name, mpesa_number, hedera_account_id })
+  });
+
+  let data = await res.json();
+  if (res.ok) {
+    alert("✅ Payment config added: " + data.id);
+  } else {
+    alert("❌ Error: " + (data.error || "failed"));
+  }
+}
+</script>
+
+<script>document.addEventListener("DOMContentLoaded", async () => {
+  const token = localStorage.getItem("jwt_token");
+  if (!token) return;
+
+  let res = await fetch(`${backendURL}/api/users/me`, {
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  if (!res.ok) return;
+
+  let user = await res.json();
+  document.getElementById("sidebar-hedera-id").textContent =
+    user.hedera_id || "N/A";
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const createBtn = document.getElementById("create-order-btn");
+  const orderIdField = document.getElementById("order-id");
+  const agencyField = document.getElementById("agency-number");
+
+  // Create Order
+  createBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("jwt_token");
+    if (!token) { alert("Please login first."); return; }
+
+    const msisdn = document.getElementById("create-msisdn").value.trim();
+    const amount = document.getElementById("create-amount").value.trim();
+    if (!msisdn || !amount) {
+      document.getElementById("create-order-msg").textContent = "❌ msisdn and amount required";
+      return;
+    }
+
+    createBtn.disabled = true;
+    createBtn.textContent = "Creating...";
+
+    try {
+      const res = await fetch(`${backendURL}/api/payments/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ user_id: window.loggedInUserId, msisdn, amount })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "create failed");
+
+      // ✅ backend se aaya order_id + agency_number use karo
+      orderIdField.value = data.order_id;
+      agencyField.value = data.agency_number;
+
+      document.getElementById("create-order-msg").textContent = `✅ Order created: ${data.order_id}`;
+      createBtn.textContent = "Order Created";
+    } catch (err) {
+      document.getElementById("create-order-msg").textContent = "❌ " + err.message;
+      createBtn.disabled = false;
+      createBtn.textContent = "Create Order";
+    }
+  });
+
+  // Confirm Payment
+  const form = document.getElementById("payment-form");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("jwt_token");
+    if (!token) { alert("Please login first."); return; }
+
+    const payload = {
+      order_id: orderIdField.value.trim(),
+      msisdn: document.getElementById("user-msisdn").value.trim(),
+      amount: document.getElementById("payment-amount").value.trim(),
+      mpesa_ref: document.getElementById("mpesa-ref").value.trim(),
+      agency_number: agencyField.value.trim()
+    };
+
+    try {
+      const res = await fetch(`${backendURL}/api/payments/confirm`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      document.getElementById("payment-result").innerHTML = res.ok
+        ? `<div class="alert alert-success">✅ ${data.message}<br><small>Tx: ${data.hedera_tx_id || "-"}</small></div>`
+        : `<div class="alert alert-danger">❌ ${data.error}<br><small>${JSON.stringify(data.details || "")}</small></div>`;
+    } catch (err) {
+      document.getElementById("payment-result").innerHTML =
+        `<div class="alert alert-danger">❌ Network error: ${err.message}</div>`;
+    }
+  });
+});
+</script>
+
+
+
+
+</body>
+
+</html>
+
+
+
+

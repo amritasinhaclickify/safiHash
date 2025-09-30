@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bank Admin Dashboard</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+    <style>
+        body {
+            background: #fff;
+        }
+
+        .navbar {
+            background: #e8f2ff;
+            border-bottom: 1px solid #dbe2ea;
+        }
+
+        .summary-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            text-align: center;
+            padding: 1rem;
+            background: #fff;
+        }
+
+        .summary-card h5 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .summary-card .muted {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .excel-table th {
+            background: #e8f2ff;
+            border: 1px solid #dbe2ea;
+        }
+
+        .excel-table td {
+            border: 1px solid #e6edf5;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top bar -->
+    <nav class="navbar navbar-light">
+        <div class="container-fluid px-5">
+            <span class="navbar-brand mb-0 h1">Bank Admin Dashboard</span>
+            <div class="d-flex gap-2">
+                <a class="btn btn-outline-primary btn-sm" href="/chatbot">Open Chatbot</a>
+                <button class="btn btn-outline-danger btn-sm" id="logout-btn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-5 py-4">
+
+        <!-- 🔹 Summary cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="summary-card shadow-sm">
+                    <div class="muted">Bank Account</div>
+                    <h5 id="accountId">—</h5>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="summary-card shadow-sm">
+                    <div class="muted">HBAR Balance</div>
+                    <h5 id="hbarBalance">—</h5>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="summary-card shadow-sm">
+                    <div class="muted">BHC Balance</div>
+                    <h5 id="bhcBalance">—</h5>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🔹 Transfer Funds -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header fw-bold">
+                Transfer Funds (Bank → Verified User/NGO/Company)
+            </div>
+            <div class="card-body">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">Recipient User ID</label>
+                        <input type="number" class="form-control" id="tf-recipient-id" placeholder="e.g. 12">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Amount</label>
+                        <input type="number" step="0.00000001" class="form-control" id="tf-amount" placeholder="e.g. 1.5">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Asset</label>
+                        <select class="form-select" id="tf-asset">
+                            <option value="HBAR" selected>HBAR</option>
+                            <option value="BHC">BHC (HTS)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-primary w-100" onclick="submitTransfer()">Send</button>
+                    </div>
+                </div>
+<div class="mt-2 small text-muted">
+    <a href="#" data-bs-toggle="modal" data-bs-target="#qrModal">
+        View Sandbox QR
+    </a>
+    <span class="ms-2">(Note: This is a <code>static/demo QR</code>. Replace with real merchant QR for live payments.)</span>
+</div>
+
+<!-- QR Modal -->
+<div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content p-3 text-center">
+      <h6 id="qrModalLabel" class="mb-2">Sandbox QR Code</h6>
+      <img src="{{ url_for('static', filename='images/mpesa_qr.png') }}"
+           alt="Sandbox QR"
+           class="d-block mx-auto"
+           style="max-width:250px; border:1px solid #ddd; border-radius:8px; padding:4px;">
+      <div class="mt-2 small text-muted">
+        Replace with real merchant/paybill QR for production payments.
+      </div>
+    </div>
+  </div>
+</div>
+
+                <div id="tf-status" class="mt-2"></div>
+            </div>
+        </div>
+
+
+        <!-- 🔹 Tabs -->
+        <ul class="nav nav-tabs mb-3" id="adminTabs">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#usersTab">Users</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#loansTab">Loans</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#kycTab">KYC</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#depositsTab">Deposits</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#txTab">Transactions</a></li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Users -->
+            <div class="tab-pane fade show active" id="usersTab">
+                <table class="table table-sm excel-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>KYC</th>
+                            <th>Hedera ID</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersBody">
+                        <tr>
+                            <td colspan="5">Loading…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Loans -->
+            <div class="tab-pane fade" id="loansTab">
+                <table class="table table-sm excel-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>Amount</th>
+                            <th>Purpose</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="loansBody">
+                        <tr>
+                            <td colspan="5">Loading…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+<!-- KYC -->
+<div class="tab-pane fade" id="kycTab">
+
+    <!-- 🔀 Toggle KYC Mode -->
+    <div class="mb-2 d-flex align-items-center">
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="kycAutoToggle" onchange="toggleKYCMode()">
+            <label class="form-check-label" for="kycAutoToggle">Auto-Approve Mode</label>
+        </div>
+        <span id="kycModeStatus" class="ms-2 text-muted">[Manual]</span>
+    </div>
+
+    <table class="table table-sm excel-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>User</th>
+                <th>Doc Type</th>
+                <th>Doc Number</th>
+                <th>Status</th>
+                <th>Hedera File ID</th>
+                <th>File Hash</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="kycBody">
+            <tr>
+                <td colspan="8">Loading…</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+
+            <!-- Deposits -->
+            <div class="tab-pane fade" id="depositsTab">
+                <table class="table table-sm excel-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="depositsBody">
+                        <tr>
+                            <td colspan="4">Loading…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Transactions -->
+            <div class="tab-pane fade" id="txTab">
+                <table class="table table-sm excel-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>When</th>
+                            <th>Type</th>
+                            <th>Asset</th>
+                            <th>Amount</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Tx</th>
+                        </tr>
+                    </thead>
+                    <tbody id="txBody">
+                        <tr>
+                            <td colspan="8">Loading…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 🔐 Optional: get admin identity
+        async function getAdmin() {
+            try {
+                const token = localStorage.getItem('jwt_token');
+                const res = await fetch('/api/users/me', {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+                if (!res.ok) return null;
+                return await res.json();
+            } catch { return null; }
+        }
+
+        // ✅ Logout
+        document.getElementById("logout-btn").addEventListener("click", async () => {
+            await fetch("/api/users/logout", { method: "POST", credentials: "include" });
+            window.location.href = "/api/users/auth";
+        });
+
+        // ---------- Load Bank Balance ----------
+        async function loadBalance() {
+            try {
+                const res = await fetch("/api/bank-admin/balance");
+                const data = await res.json();
+                document.getElementById("accountId").textContent = data.account_id || "-";
+                document.getElementById("hbarBalance").textContent =
+                    (Number(data.balance_hbar || 0)).toFixed(2) + " ℏ";
+                document.getElementById("bhcBalance").textContent =
+                    data?.bhc?.display ? Number(data.bhc.display).toFixed(2) + " BHC" : "0.00 BHC";
+            } catch (e) {
+                document.getElementById("hbarBalance").textContent = "❌";
+                document.getElementById("bhcBalance").textContent = "❌";
+            }
+        }
+
+        // ---------- Users ----------
+        async function loadUsers() {
+            const res = await fetch("/api/bank-admin/users");
+            const data = await res.json();
+            const tbody = document.querySelector("#usersBody");
+            tbody.innerHTML = "";
+            data.forEach(u => {
+                tbody.innerHTML += `
+            <tr>
+              <td>${u.id}</td>
+              <td>${u.username}</td>
+              <td>${u.email}</td>
+              <td>${u.kyc_status || "-"}</td>
+              <td>${u.hedera_id || "N/A"}</td>
+            </tr>`;
+            });
+        }
+
+        // ---------- Loans ----------
+        async function loadLoans() {
+            const res = await fetch("/api/bank-admin/loans");
+            const data = await res.json();
+            const tbody = document.querySelector("#loansBody");
+            tbody.innerHTML = "";
+            data.forEach(l => {
+                tbody.innerHTML += `
+            <tr>
+              <td>${l.id}</td>
+              <td>${l.user_id}</td>
+              <td>${l.amount}</td>
+              <td>${l.purpose}</td>
+              <td>${l.status}</td>
+              <td>
+                <button class="btn btn-sm btn-success" onclick="updateLoan(${l.id}, 'approved')">Approve</button>
+                <button class="btn btn-sm btn-danger" onclick="updateLoan(${l.id}, 'rejected')">Reject</button>
+              </td>
+            </tr>`;
+            });
+        }
+        async function updateLoan(id, status) {
+            await fetch(`/api/bank-admin/loans/${id}/status`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status })
+            });
+            loadLoans();
+        }
+
+// ---------- KYC ----------
+async function loadKYC() {
+    const res = await fetch("/api/bank-admin/kyc");
+    if (!res.ok) {
+        document.querySelector("#kycBody").innerHTML = '<tr><td colspan="8">Failed to load KYC</td></tr>';
+        return;
+    }
+    const data = await res.json();
+    const tbody = document.querySelector("#kycBody");
+    tbody.innerHTML = "";
+    data.forEach(req => {
+        const badge =
+            req.status === "approved" ? "success"
+                : req.status === "rejected" ? "danger" : "warning";
+        tbody.innerHTML += `
+        <tr>
+          <td>${req.id}</td>
+          <td>${req.user_id}</td>
+          <td>${req.document_type}</td>
+          <td>${req.document_number}</td>
+          <td><span class="badge bg-${badge}">${req.status}</span></td>
+          <td>${req.hedera_file_id || "-"}</td>
+          <td>${req.hedera_file_hash ? req.hedera_file_hash.slice(0, 10) + "..." : "-"}</td>
+          <td>
+            <button class="btn btn-sm btn-success" onclick="updateKYC(${req.id}, 'approved')">Approve</button>
+            <button class="btn btn-sm btn-danger" onclick="updateKYC(${req.id}, 'rejected')">Reject</button>
+          </td>
+        </tr>`;
+    });
+
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8">No KYC requests</td></tr>';
+    }
+}
+
+async function updateKYC(id, status) {
+    const token = localStorage.getItem('jwt_token');
+    let url = status === "approved"
+        ? `/api/kyc/approve/${id}`
+        : `/api/kyc/reject/${id}`;
+    await fetch(url, {
+        method: "POST",
+        headers: token ? { "Authorization": `Bearer ${token}` } : {}
+    });
+    await loadKYC();
+}
+
+// ---------- Toggle KYC Mode ----------
+async function toggleKYCMode() {
+    const token = localStorage.getItem('jwt_token');
+    const statusEl = document.getElementById("kycModeStatus");
+    const toggleEl = document.getElementById("kycAutoToggle");
+
+    try {
+        const res = await fetch("/api/kyc/toggle_mode", {
+            method: "POST",
+            headers: token ? { "Authorization": `Bearer ${token}` } : {}
+        });
+
+        if (!res.ok) {
+            // toggle failed on server — revert checkbox visually and show error
+            await loadKYCMode(); // restore UI from server
+            statusEl.textContent = "[Error]";
+            return;
+        }
+
+        const data = await res.json();
+        const mode = (data.mode || data.message || "").toString().toLowerCase().includes("auto") ? "auto" : (data.mode || "manual");
+        statusEl.textContent = `[${mode === "auto" ? "Auto" : "Manual"}]`;
+        toggleEl.checked = (mode === "auto");
+
+        // refresh KYC table so approved/pending reflect immediately
+        await loadKYC();
+    } catch (e) {
+        statusEl.textContent = "[Network error]";
+        // restore checkbox state from server
+        await loadKYCMode();
+    }
+}
+
+// ---------- Load Current KYC Mode ----------
+async function loadKYCMode() {
+    const token = localStorage.getItem('jwt_token');
+    const statusEl = document.getElementById("kycModeStatus");
+    const toggleEl = document.getElementById("kycAutoToggle");
+
+    try {
+        const res = await fetch("/api/kyc/mode", {
+            method: "GET",
+            headers: token ? { "Authorization": `Bearer ${token}` } : {}
+        });
+        if (!res.ok) {
+            statusEl.textContent = "[Error]";
+            toggleEl.checked = false;
+            return;
+        }
+        const data = await res.json();
+        const mode = (data.mode || "manual").toString().toLowerCase();
+        statusEl.textContent = `[${mode === "auto" ? "Auto" : "Manual"}]`;
+        toggleEl.checked = (mode === "auto");
+    } catch (e) {
+        statusEl.textContent = "[Network error]";
+        toggleEl.checked = false;
+    }
+}
+
+// ✅ Call on page load
+document.addEventListener("DOMContentLoaded", () => {
+    loadKYC();
+    loadKYCMode();
+});
+
+
+        // ---------- Deposits ----------
+        async function loadDeposits() {
+            const res = await fetch("/api/bank-admin/deposits");
+            const data = await res.json();
+            const tbody = document.querySelector("#depositsBody");
+            tbody.innerHTML = "";
+            data.forEach(d => {
+                tbody.innerHTML += `
+            <tr>
+              <td>${d.id}</td>
+              <td>${d.user_id}</td>
+              <td>${d.amount}</td>
+              <td>${d.status}</td>
+              <td>
+                <button class="btn btn-sm btn-success" onclick="approveDeposit(${d.id})">Approve</button>
+                <button class="btn btn-sm btn-danger" onclick="rejectDeposit(${d.id})">Reject</button>
+              </td>
+            </tr>`;
+            });
+        }
+        async function approveDeposit(id) {
+            await fetch(`/api/bank-admin/deposits/${id}/approve`, { method: "POST" });
+            loadDeposits();
+        }
+        async function rejectDeposit(id) {
+            await fetch(`/api/bank-admin/deposits/${id}/reject`, { method: "POST" });
+            loadDeposits();
+        }
+
+        // ---------- Transactions ----------
+        async function loadTransactions() {
+            const res = await fetch("/api/finance/transactions");
+            const data = await res.json();
+            const tbody = document.querySelector("#txBody");
+            tbody.innerHTML = "";
+            data.forEach(t => {
+                const pathArr = Array.isArray(t.path) ? t.path : [];
+                const pathStr = pathArr.length ? pathArr.join(" → ") : "-";
+                tbody.innerHTML += `
+            <tr>
+              <td>${t.id}</td>
+              <td>${t.timestamp}</td>
+              <td>${t.type}</td>
+              <td>${t.asset_type}</td>
+              <td>${t.amount}</td>
+              <td>${t.from_account || "-"}</td>
+              <td>${t.to_account || "-"}</td>
+              <td>${pathStr}</td>
+            </tr>`;
+            });
+        }
+
+        // ---------- Init ----------
+        (async function init() {
+            await loadBalance();
+            await loadUsers();
+            await loadLoans();
+            await loadKYC();
+            await loadDeposits();
+            await loadTransactions();
+        })();
+    </script>
+    <script>
+        // ---------- Transfer Funds ----------
+            async function submitTransfer() {
+                const recipientId = Number(document.getElementById('tf-recipient-id').value);
+                const amountRaw = document.getElementById('tf-amount').value;
+                const amountNum = Number(amountRaw);
+                const asset = (document.getElementById('tf-asset').value || '').toUpperCase();
+                const statusBox = document.getElementById('tf-status');
+                statusBox.innerHTML = '';
+
+                if (!recipientId || !amountNum || amountNum <= 0) {
+                    statusBox.innerHTML = `<div class="alert alert-warning py-1 my-2">Enter valid recipient and amount.</div>`;
+                    return;
+                }
+
+                if (!['HBAR', 'BHC'].includes(asset)) {
+                    statusBox.innerHTML = `<div class="alert alert-warning py-1 my-2">Select a valid asset (HBAR or BHC).</div>`;
+                    return;
+                }
+
+                // For BHC, allow max 2 decimals
+                let finalAmount = amountNum;
+                if (asset === 'BHC') {
+                    const parts = amountRaw.split('.');
+                    if (parts.length === 2 && parts[1].length > 2) {
+                        statusBox.innerHTML = `<div class="alert alert-warning py-1 my-2">BHC supports max 2 decimals.</div>`;
+                        return;
+                    }
+                    finalAmount = Math.round(amountNum * 100) / 100;
+                }
+
+                const me = await getAdmin();
+                if (!me || !me.id) {
+                    statusBox.innerHTML = `<div class="alert alert-danger py-1 my-2">Cannot resolve admin identity.</div>`;
+                    return;
+                }
+
+                const payload = {
+                    sender_id: me.id,
+                    recipient_id: recipientId,
+                    amount: finalAmount,
+                    asset_type: asset
+                };
+
+                try {
+                    const token = localStorage.getItem('jwt_token');
+                    const res = await fetch('/api/finance/transfer', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    let data = {};
+                    try { data = await res.json(); } catch (_) { }
+
+                    if (!res.ok) {
+                        const msg = data.error ? `${data.error}${data.details ? ' — ' + data.details : ''}` : 'Transfer failed';
+                        statusBox.innerHTML = `<div class="alert alert-danger py-1 my-2">❌ ${msg}</div>`;
+                        return;
+                    }
+
+                    statusBox.innerHTML = `<div class="alert alert-success py-1 my-2">✅ ${data.message} (tx: ${data.tx_id || '-'})</div>`;
+                    loadBalance();
+                    loadTransactions();
+
+                } catch (e) {
+                    statusBox.innerHTML = `<div class="alert alert-danger py-1 my-2">❌ Network error: ${e.message}</div>`;
+                }
+            }
+
+    </script>
+
+</body>
+
+</html>

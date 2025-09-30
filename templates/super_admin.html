@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Super Admin Dashboard - Safichain</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Safichain Super Admin</a>
+            <div class="d-flex">
+                <button class="btn btn-outline-light" id="logout-btn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2 class="text-center mb-4">Super Admin Dashboard ⚡</h2>
+
+        <!-- Users & Roles Table -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">All Users & Roles</div>
+            <div class="card-body">
+                <table class="table table-bordered" id="users-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>KYC Status</th>
+                            <th>Current Role</th>
+                            <th>Change Role</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // ✅ Logout handler
+        document.getElementById("logout-btn").addEventListener("click", async () => {
+            try {
+                await fetch("/api/users/logout", { method: "POST", credentials: "include" });
+                window.location.href = "/api/users/auth";
+            } catch (err) {
+                alert("Logout failed!");
+            }
+        });
+
+        // ✅ Load users list
+        async function loadUsers() {
+            let res = await fetch("/api/super-admin/users", { credentials: "include" });
+            let data = await res.json();
+
+            let tbody = document.querySelector("#users-table tbody");
+            tbody.innerHTML = "";
+
+            data.forEach(user => {
+                let row = `
+                    <tr>
+                        <td>${user.id}</td>
+                        <td>${user.username}</td>
+                        <td>${user.email}</td>
+                        <td>${user.kyc_status}</td>
+                        <td><span class="badge bg-info">${user.role}</span></td>
+                        <td>
+                            <select class="form-select" onchange="updateRole(${user.id}, this.value)">
+                                <option value="">--Select Role--</option>
+                                <option value="user" ${user.role === "user" ? "selected" : ""}>User</option>
+                                <option value="bank-admin" ${user.role === "bank-admin" ? "selected" : ""}>Bank Admin</option>
+                                <option value="ngo" ${user.role === "ngo" ? "selected" : ""}>NGO</option>
+                                <option value="company" ${user.role === "company" ? "selected" : ""}>Company</option>
+                                <option value="super-admin" ${user.role === "super-admin" ? "selected" : ""}>Super Admin</option>
+                            </select>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        // ✅ Update user role
+        async function updateRole(userId, newRole) {
+            if (!newRole) return;
+            await fetch(`/api/super-admin/role/${userId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ role: newRole })
+            });
+            loadUsers(); // refresh table
+        }
+
+        // ✅ Call on page load
+        document.addEventListener("DOMContentLoaded", () => {
+            loadUsers();
+        });
+    </script>
+
+</body>
+
+</html>

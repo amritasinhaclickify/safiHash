@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Company Dashboard - Safichain</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Safichain Company</a>
+            <div class="d-flex">
+                <a class="btn btn-outline-light me-2" href="/chatbot">🤖 Chatbot</a>
+                <button class="btn btn-outline-light" id="logout-btn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2 class="text-center mb-4">Company Dashboard 🏢</h2>
+
+        <!-- Wallet Balance -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <span>Wallet Balance</span>
+                <button class="btn btn-warning btn-sm" onclick="paySalaries()">💸 Pay Salaries</button>
+            </div>
+            <div class="card-body">
+                <h4 id="wallet-balance">Loading...</h4>
+            </div>
+        </div>
+
+        <!-- Employees -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">Employees</div>
+            <div class="card-body">
+                <table class="table table-bordered" id="employees-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>KYC Status</th>
+                            <th>Hedera Account</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Salary Transactions -->
+        <div class="card">
+            <div class="card-header bg-success text-white">Salary Transactions</div>
+            <div class="card-body">
+                <table class="table table-bordered" id="tx-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Recipient ID</th>
+                            <th>Amount</th>
+                            <th>Description</th>
+                            <th>HederaTx</th>
+                            <th>Path</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const backendURL = "http://127.0.0.1:5000";
+
+        // ✅ Utility safe fetch
+        async function safeFetch(url, options = {}) {
+            try {
+                let res = await fetch(url, { credentials: "include", ...options });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.json();
+            } catch (err) {
+                console.error("Fetch error:", err);
+                return null;
+            }
+        }
+
+        // ✅ Load Balance
+        async function loadBalance() {
+            let data = await safeFetch(`${backendURL}/api/company/balance`);
+            document.getElementById("wallet-balance").innerText =
+                data ? `${data.balance} HBAR` : "⚠️ Unable to load balance";
+        }
+
+        // ✅ Load Employees
+        async function loadEmployees() {
+            let data = await safeFetch(`${backendURL}/api/company/users`);
+            let tbody = document.querySelector("#employees-table tbody");
+            tbody.innerHTML = "";
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No employees found</td></tr>`;
+                return;
+            }
+
+            data.forEach(u => {
+                tbody.innerHTML += `
+                  <tr>
+                    <td>${u.id}</td>
+                    <td>${u.username}</td>
+                    <td>${u.email}</td>
+                    <td>${u.kyc_status}</td>
+                    <td>${u.hedera_account_id || "-"}</td>
+                  </tr>`;
+            });
+        }
+
+        // ✅ Load Transactions
+        async function loadTransactions() {
+            let data = await safeFetch(`${backendURL}/api/company/transactions`);
+            let tbody = document.querySelector("#tx-table tbody");
+            tbody.innerHTML = "";
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No transactions yet</td></tr>`;
+                return;
+            }
+
+            data.forEach(tx => {
+                let txLink = tx.hedera_tx_id
+                    ? `<a href="https://hashscan.io/testnet/transaction/${tx.hedera_tx_id}" target="_blank">${tx.hedera_tx_id}</a>`
+                    : "-";
+
+                tbody.innerHTML += `
+                  <tr>
+                    <td>${tx.id}</td>
+                    <td>${tx.recipient_id}</td>
+                    <td>${tx.amount} HBAR</td>
+                    <td>${tx.description}</td>
+                    <td>${txLink}</td>
+                    <td>${tx.hedera_path || "-"}</td>
+                    <td>${tx.status || "-"}</td>
+                  </tr>`;
+            });
+        }
+
+        // ✅ Pay Salaries
+        async function paySalaries() {
+            if (!confirm("Are you sure you want to pay salaries to all employees?")) return;
+            let res = await safeFetch(`${backendURL}/api/company/pay-salaries`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ amount: 2000 })  // fixed salary
+            });
+            if (res) {
+                alert(res.message || "Salaries processed");
+                loadBalance();
+                loadTransactions();
+            } else {
+                alert("⚠️ Salary payout failed");
+            }
+        }
+
+        // ✅ Logout
+        document.getElementById("logout-btn").addEventListener("click", async () => {
+            await fetch(`${backendURL}/api/users/logout`, { method: "POST", credentials: "include" });
+            window.location.href = "/api/users/auth";
+        });
+
+        // ✅ Init
+        document.addEventListener("DOMContentLoaded", () => {
+            loadBalance();
+            loadEmployees();
+            loadTransactions();
+        });
+    </script>
+
+</body>
+
+</html>

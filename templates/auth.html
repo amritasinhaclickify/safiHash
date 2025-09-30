@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SafiHash— Auth</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Minimal custom CSS for full-screen alignment & small helpers -->
+  <style>
+  :root{
+    --muted: #6c757d;
+    --accent: #2575fc;
+  }
+
+  /* Reset / base */
+  body {
+    background: #fff;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    font-size: 16px; /* base size */
+    line-height: 1.5;
+    color: #111827;
+  }
+
+  /* apply header color whether element uses .navbar or .site-nav */
+  .navbar, .site-nav {
+    background: #e8f2ff;
+    border-bottom: 1px solid #dbe2ea;
+  }
+
+  /* Main area: fill available viewport height between header & footer */
+  main {
+    min-height: calc(100vh - 140px); /* adjusts to leave space for header + footer */
+    display: flex;
+    align-items: center;
+    padding-top: 28px;
+    padding-bottom: 28px;
+  }
+
+  /* container spacing - increased max-width to reduce side gaps on large monitors */
+  .page-inner {
+    width: 100%;
+    max-width: 1600px;  
+    margin: 0 auto;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  /* minimal card styling (auth box + sidebar) */
+  .auth-box {
+    border-radius: 12px;
+    padding: 1.75rem;
+    box-shadow: 0 8px 30px rgba(2,6,23,0.06);
+    background: #fff;
+  }
+
+  .sidebar {
+    border-radius: 12px;
+    padding: 1.6rem;
+    background: #f8f9fa;
+    box-shadow: 0 6px 20px rgba(2,6,23,0.04);
+    height: 100%;
+  }
+
+  .logo {
+    width:48px;
+    height:48px;
+    border-radius:10px;
+    background: linear-gradient(135deg,#0b6cf6,#0b4dd1);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:900;
+  }
+
+  .feature {
+    display:flex;
+    gap:12px;
+    margin-bottom:1rem;
+  }
+
+  .icon {
+    width:36px;
+    height:36px;
+    border-radius:8px;
+    background:#e8f0fe;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--accent);
+    font-weight:700;
+  }
+
+  .lead {
+    color:var(--muted);
+    font-size:1rem;
+  }
+
+  .nav-link.active {
+    color: var(--accent) !important;
+    font-weight:600;
+  }
+
+  /* make login/register area comfortable on wide screens */
+  .auth-card-wrapper {
+    margin-top: 12px;
+  }
+
+  /* footer */
+  footer {
+    border-top:1px solid #e9ecef;
+    padding:18px 0;
+    color:var(--muted);
+    font-size:14px;
+    background:#fff;
+  }
+
+  /* responsive: stack columns on small screens */
+  @media (max-width: 991px) {
+    main {
+      padding-top: 18px;
+      padding-bottom: 18px;
+    }
+    .auth-box {
+      padding: 1.25rem;
+    }
+  }
+  </style>
+
+</head>
+<body>
+
+  <!-- HEADER / NAV -->
+  <header class="site-nav">
+    <div class="container-fluid">
+      <div class="page-inner d-flex align-items-center justify-content-between py-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="d-flex align-items-center">
+            <div class="fw-bold">SafiHash</div>
+            <small class="text-muted ms-2">Community-powered banking &amp; transparent flows</small>
+          </div>
+        </div>
+        <!-- right side of header can keep empty or add links later -->
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN (full-screen area) -->
+  <main>
+    <div class="page-inner">
+      <div class="row gx-6 gy-4">
+        <!-- Left: Hero + Auth -->
+        <div class="col-12 col-lg-9 d-flex flex-column">
+         <!-- Hero -->
+<div>
+  <div class="d-flex align-items-center gap-3 mb-2" style="margin-top:60px;">
+    <div class="logo">S</div>
+    <div>
+      <h1 class="h3 mb-0" style="font-weight:900;">Find your trusted financial flow</h1>
+      <div style="font-size:13px;color:var(--muted);">
+        Community-powered banking with transparency at the core
+      </div>
+    </div>
+  </div>
+
+  <p class="lead mt-4 mb-3">
+    SafiHash turns cooperative trust, verified identity, and transparent transactions 
+    into an <strong>auditable Trust Score</strong>.  
+    Lenders, administrators, and members can rely on this score to make faster, safer, and fairer financial decisions.
+  </p>
+
+  <div class="alert alert-light border d-flex gap-3 align-items-start mt-4">
+    <div class="fs-4 text-primary">💡</div>
+    <div>
+      <strong>Why SafiHash?</strong>
+      <div class="text-muted" style="font-size:14px;">
+        Traditional community lending often suffers from weak identity checks, unclear repayment histories, 
+        and hidden fraud risks.  
+        SafiHash solves this by combining <em>KYC, on-chain verification, transaction scoring, and social trust signals</em> 
+        into a single, explainable score — so you always know <strong>who to trust and why</strong>.
+      </div>
+    </div>
+  </div>
+</div>
+
+
+          <!-- Auth box (large rectangle) -->
+          <div class="auth-card-wrapper mt-2">
+            <div class="auth-box">
+              <!-- Nav tabs -->
+              <ul class="nav nav-tabs mb-3" id="authTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button">Login</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button">Register</button>
+                </li>
+              </ul>
+
+              <!-- Tab content -->
+              <div class="tab-content">
+                <!-- Login Form -->
+                <div class="tab-pane fade show active" id="login" role="tabpanel">
+                  <form id="loginForm">
+                    <div class="mb-3">
+                      <label class="form-label">Email</label>
+                      <input type="email" class="form-control" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Password</label>
+                      <input type="password" class="form-control" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 btn-lg">Login</button>
+                  </form>
+                </div>
+
+                <!-- Register Form -->
+                <div class="tab-pane fade" id="register" role="tabpanel">
+                  <form id="registerForm">
+                    <div class="mb-3">
+                      <label class="form-label">Name</label>
+                      <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Email</label>
+                      <input type="email" class="form-control" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Password</label>
+                      <input type="password" class="form-control" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 btn-lg">Register</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      <!-- Right: Sidebar -->
+<div class="col-12 col-lg-3">
+  <aside class="sidebar h-100 d-flex flex-column justify-content-between">
+    <div>
+      <h5 class="mb-2"><strong>How SafiHash Works</strong></h5>
+      <p class="text-muted mb-3" style="font-size:14px;">
+        SafiHash makes <strong>co-operative lending</strong> safer by combining Hedera services 
+        (Accounts, HTS, HFS, Consensus, Smart Contracts) to create a transparent 
+        <strong>Trust Score</strong> for every member.
+      </p>
+
+      <div class="feature">
+        <div class="icon">1</div>
+        <div>
+          <div style="font-weight:600;">Step 1: Verify Identity</div>
+          <div style="font-size:13px;color:var(--muted);">
+            KYC stored on Hedera File Service (HFS). Only <em>verified users</em> can join groups or handle funds.
+          </div>
+        </div>
+      </div>
+
+      <div class="feature">
+        <div class="icon">2</div>
+        <div>
+          <div style="font-weight:600;">Step 2: Tokenized Transactions</div>
+          <div style="font-size:13px;color:var(--muted);">
+            All deposits, withdrawals, loans, and repayments flow through Hedera Token Service (HTS) using <strong>BHC token</strong>.
+          </div>
+        </div>
+      </div>
+
+      <div class="feature">
+        <div class="icon">3</div>
+        <div>
+          <div style="font-weight:600;">Step 3: Consensus & Trust Score</div>
+          <div style="font-size:13px;color:var(--muted);">
+            Hedera Consensus Service (HCS) records votes, repayments, and KYC proofs. 
+            A smart contract updates the <strong>Trust Score</strong>, ensuring tamper-proof, auditable decisions.
+          </div>
+        </div>
+      </div>
+
+      <div class="feature">
+        <div class="icon">4</div>
+        <div>
+          <div style="font-weight:600;">Step 4: Insights & Fair Lending</div>
+          <div style="font-size:13px;color:var(--muted);">
+            Trust Score guides lending: consistent savers & timely repayers get higher trust, while risky users are flagged. 
+            Admins can view score dashboards for fair decisions.
+          </div>
+        </div>
+      </div>
+    </div>
+
+ <div class="mt-3">
+  <button class="btn btn-outline-primary w-100 mb-2" onclick="window.location.href='/docs'">📘 How to Use SafiHash</button>
+  <div class="text-muted" style="font-size:13px;">
+    Step-by-step guide with commands, test accounts, and trust scoring — everything you need to explore SafiHash.
+  </div>
+</div>
+
+  </aside>
+</div>
+<!-- FOOTER -->
+<footer>
+  <div class="container page-inner">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center py-1">
+      <div><strong>SafiHash</strong> — Community-driven, KYC-ready financial trust scoring.</div>
+      <div class="text-muted small mt-2 mt-md-0">
+        © <span id="year"></span> SafiHash • Built for Hedera Hackathon
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const backendURL = "http://127.0.0.1:5000"; // Change if deployed
+
+        // ✅ Login Submit (with cookies)
+            document.getElementById("loginForm").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                let data = {
+                    username: this.email.value,
+                    password: this.password.value
+                };
+                let res = await fetch(`${backendURL}/api/users/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data),
+                    credentials: "include" // ⬅ sends and receives cookies
+                });
+                let result = await res.json();
+
+                if (res.ok) {
+                    if (result.access_token) {
+                        localStorage.setItem("jwt_token", result.access_token);
+                    }
+
+                    // ✅ Role check for redirect
+                    if (result.role === "super-admin") {
+                        window.location.href = "/super-admin";
+                    } else if (result.role === "bank-admin") {
+                        window.location.href = "/bank-admin";
+                    } else if (result.role === "ngo") {
+                        window.location.href = "/ngo";
+                    } else if (result.role === "company") {
+                        window.location.href = "/company";
+                    } else {
+                        window.location.href = "/chatbot"; // normal user
+                    }
+
+                }
+                else {
+                    alert(result.error || "Login failed");
+                }
+            });
+
+
+        // ✅ Register Submit
+        document.getElementById("registerForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+            let data = {
+                username: this.name.value,
+                email: this.email.value,
+                password: this.password.value
+            };
+            let res = await fetch(`${backendURL}/api/users/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+                credentials: "include" // not strictly needed here but consistent
+            });
+            let result = await res.json();
+
+            if (res.ok) {
+                alert(result.message || "Registration successful. Please login.");
+            } else {
+                alert(result.error || "Registration failed");
+            }
+        });
+    </script>
+
+
+
+</body>
+
+</html>

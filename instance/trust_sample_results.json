@@ -1,0 +1,21 @@
+[
+  {
+    "user_id": 1,
+    "group_id": 3,
+    "result": {
+      "params": {
+        "Deposit Consistency": 0.0,
+        "Repayment Timeliness": 0.0,
+        "On-time Repayments Ratio": 0.0,
+        "Voting Participation": 0.0,
+        "Loan Request Frequency": 100.0,
+        "Loan Approval Rate": 0.0,
+        "Disbursal Timeliness": 100.0,
+        "Self-Repayment Rate": 0.0,
+        "Third-Party Payment Flag": 100.0,
+        "Profit Contribution Share": 0.0
+      },
+      "overall": 30.0
+    }
+  }
+]
