@@ -1,273 +1,225 @@
 <!doctype html>
 <html lang="en">
-
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Bank Admin Dashboard</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bank Admin Dashboard</title>
 
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
 
-    <style>
-        body {
-            background: #fff;
-        }
+  <style>
+    :root{
+      --sidebar-dark:#111827;
+      --sidebar-dark-2:#0f172a;
+      --navy-900:#0b3a6d;
+      --border:#e5e7eb;
+      --border-dark:#0b1220;
+      --bg:#f5f7fb;
+    }
 
-        .navbar {
-            background: #e8f2ff;
-            border-bottom: 1px solid #dbe2ea;
-        }
+    body{ background:var(--bg); }
 
-        .summary-card {
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            text-align: center;
-            padding: 1rem;
-            background: #fff;
-        }
+    .coop-app{ display:grid; grid-template-columns: 360px minmax(0,1fr); column-gap: 24px; min-height: 100vh; }
+    @media (min-width:1500px){ .coop-app{ grid-template-columns: 380px minmax(0,1fr); column-gap:28px; } }
 
-        .summary-card h5 {
-            margin: 0;
-            font-weight: 600;
-        }
+    .topbar{ background:var(--navy-900); color:#fff; position:sticky; top:0; z-index:1030; border-bottom:1px solid rgba(255,255,255,.08); }
+    .topbar .brand{ font-weight:700; letter-spacing:.2px; color:#fff; }
+    .topbar .brand i{ font-size:1.2rem; margin-right:.35rem; }
 
-        .summary-card .muted {
-            color: #6b7280;
-            font-size: 0.9rem;
-        }
+    .coop-sidebar{ background:linear-gradient(180deg,var(--sidebar-dark),var(--sidebar-dark-2)); border-right:1px solid var(--border-dark); color:#e5e7eb; min-height: calc(100vh - 56px); position:sticky; top:56px; display:flex; flex-direction:column; }
+    .coop-sidebar .section-title { font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: #9ca3af; margin: .9rem 0 .5rem; padding: 0 1rem; }
 
-        .excel-table th {
-            background: #e8f2ff;
-            border: 1px solid #dbe2ea;
-        }
+    .brand-badge { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; background: #0ea5a6; color: #062a2a; box-shadow: 0 10px 24px rgba(14,165,166,.35); font-size: 1.2rem; flex-shrink: 0; }
+    .brand-area { padding: 2rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.25); min-height: 110px; display: flex; align-items: center; gap: 1rem; }
+    .brand-area h5 { color: #fff; font-weight: 700; font-size: 1.25rem; margin: 0 0 .25rem; }
+    .brand-area .small { color: #d1d5db; font-size: .9rem; }
 
-        .excel-table td {
-            border: 1px solid #e6edf5;
-        }
-    </style>
+    .menu{ padding:1rem 0.7rem 1.25rem; display:flex; flex-direction:column; gap:1.2rem; }
+    .menu .nav-link{ color:#e5e7eb; border-radius:.7rem; display:flex; align-items:center; gap:.75rem; padding:.6rem .75rem; font-weight:500; }
+    .menu .nav-link i{ font-size:1rem; opacity:.9; }
+    .menu .nav-link:hover{ background:rgba(255,255,255,.06); }
+    .menu .nav-link.active{ background:#0b3a6d; color:#fff; }
+
+    .coop-main{ padding: 16px 20px; }
+    .coop-main-inner{ background:transparent; padding: 8px 20px; }
+    .content-align-spacer{ height: 14px; }
+
+    .summary-card{ border:1px solid #e5e7eb; border-radius:10px; background:#fff; }
+    .muted { color:#2563eb; }
+    .pill{ background:#f3f8ff; border:1px solid #e1ecff; border-radius:999px; padding:.25rem .6rem; font-size:.875rem; }
+
+    .table{ border-collapse: separate !important; border-spacing: 0 12px !important; background: transparent; }
+    .table thead th{ background: transparent !important; border: 0 !important; border-top: 2px solid #e5e7eb !important; color: #0b3a6d; font-weight: 700; padding-top: 10px; padding-bottom: 8px; }
+    .table td{ background: #d7e3eb; border: 0 !important; padding: 6px 8px; }
+    .table tbody td:first-child{ border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+    .table tbody td:last-child{ border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+    .table tbody tr:hover td{ background: #cddbe6; }
+
+    @media (max-width: 991.98px){ .coop-app{ grid-template-columns: 1fr; column-gap:0; } .coop-sidebar{ display:none; } .coop-main{ padding:12px; } .coop-main-inner{ padding: 0; } .content-align-spacer{ height: 0; } }
+  </style>
 </head>
-
 <body>
-    <!-- Top bar -->
-    <nav class="navbar navbar-light">
-        <div class="container-fluid px-5">
-            <span class="navbar-brand mb-0 h1">Bank Admin Dashboard</span>
-            <div class="d-flex gap-2">
-                <a class="btn btn-outline-primary btn-sm" href="/chatbot">Open Chatbot</a>
-                <button class="btn btn-outline-danger btn-sm" id="logout-btn">Logout</button>
-            </div>
+  <header class="topbar py-2">
+    <div class="container-fluid d-flex align-items-center justify-content-between gap-3">
+      <div class="d-flex align-items-center gap-2 brand">
+        <i class="bi bi-bank2"></i><span>Bank Admin Dashboard</span>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <a class="btn btn-outline-light btn-sm" href="/chatbot"><i class="bi bi-robot me-1"></i> Chatbot</a>
+        <button class="btn btn-outline-light btn-sm" id="logout-btn"><i class="bi bi-box-arrow-right me-1"></i> Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="coop-app">
+    <aside class="coop-sidebar">
+      <div class="brand-area">
+        <span class="brand-badge"><i class="bi bi-shield-lock"></i></span>
+        <div class="brand-text">
+          <h5 class="mb-0">Bank Account</h5>
+          <div class="small">Hedera Treasury</div>
         </div>
-    </nav>
+      </div>
 
-    <div class="container-fluid px-5 py-4">
+      <nav class="menu nav flex-column" id="adminTabs">
+        <div class="section-title">Menu</div>
+        <a class="nav-link active" data-bs-toggle="tab" href="#usersTab"><i class="bi bi-people"></i> Users</a>
+        <a class="nav-link" data-bs-toggle="tab" href="#loansTab"><i class="bi bi-file-earmark-text"></i> Loans</a>
+        <a class="nav-link" data-bs-toggle="tab" href="#kycTab"><i class="bi bi-shield-check"></i> KYC</a>
+        <a class="nav-link" data-bs-toggle="tab" href="#depositsTab"><i class="bi bi-download"></i> Deposits</a>
+        <a class="nav-link" data-bs-toggle="tab" href="#txTab"><i class="bi bi-arrow-left-right"></i> Transactions</a>
+      </nav>
+    </aside>
 
-        <!-- 🔹 Summary cards -->
-        <div class="row g-3 mb-4">
-            <div class="col-md-4">
-                <div class="summary-card shadow-sm">
-                    <div class="muted">Bank Account</div>
-                    <h5 id="accountId">—</h5>
-                </div>
+    <main class="coop-main">
+      <div class="coop-main-inner container-fluid px-0">
+        <div class="content-align-spacer"></div>
+
+        <!-- Summary cards -->
+        <div class="row g-3 mb-4 px-3">
+          <div class="col-md-4">
+            <div class="card summary-card shadow-sm text-center p-3">
+              <div class="muted"><i class="bi bi-bank me-1"></i> Account ID</div>
+              <h5 id="accountId">—</h5>
             </div>
-            <div class="col-md-4">
-                <div class="summary-card shadow-sm">
-                    <div class="muted">HBAR Balance</div>
-                    <h5 id="hbarBalance">—</h5>
-                </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card summary-card shadow-sm text-center p-3">
+              <div class="muted"><i class="bi bi-currency-bitcoin me-1"></i> HBAR Balance</div>
+              <h5 id="hbarBalance">—</h5>
             </div>
-            <div class="col-md-4">
-                <div class="summary-card shadow-sm">
-                    <div class="muted">BHC Balance</div>
-                    <h5 id="bhcBalance">—</h5>
-                </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card summary-card shadow-sm text-center p-3">
+              <div class="muted"><i class="bi bi-coin me-1"></i> BHC Balance</div>
+              <h5 id="bhcBalance">—</h5>
             </div>
+          </div>
         </div>
 
-        <!-- 🔹 Transfer Funds -->
+        <!-- Transfer Funds (common for all tabs) -->
         <div class="card mb-4 shadow-sm">
-            <div class="card-header fw-bold">
-                Transfer Funds (Bank → Verified User/NGO/Company)
+          <div class="card-header fw-bold d-flex align-items-center justify-content-between">
+            <span><i class="bi bi-send me-1"></i> Transfer Funds (Bank → Verified User/NGO/Company)</span>
+            <a href="#" class="small" data-bs-toggle="modal" data-bs-target="#qrModal">
+              <i class="bi bi-qr-code me-1"></i> Sandbox QR
+            </a>
+          </div>
+          <div class="card-body">
+            <div class="row g-2 align-items-end">
+              <div class="col-md-3">
+                <label class="form-label">Recipient User ID</label>
+                <input type="number" class="form-control" id="tf-recipient-id" placeholder="e.g. 12">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Amount</label>
+                <input type="number" step="0.00000001" class="form-control" id="tf-amount" placeholder="e.g. 1.5">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Asset</label>
+                <select class="form-select" id="tf-asset">
+                  <option value="HBAR" selected>HBAR</option>
+                  <option value="BHC">BHC (HTS)</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <button class="btn btn-primary w-100" onclick="submitTransfer()">Send</button>
+              </div>
             </div>
-            <div class="card-body">
-                <div class="row g-2 align-items-end">
-                    <div class="col-md-3">
-                        <label class="form-label">Recipient User ID</label>
-                        <input type="number" class="form-control" id="tf-recipient-id" placeholder="e.g. 12">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Amount</label>
-                        <input type="number" step="0.00000001" class="form-control" id="tf-amount" placeholder="e.g. 1.5">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Asset</label>
-                        <select class="form-select" id="tf-asset">
-                            <option value="HBAR" selected>HBAR</option>
-                            <option value="BHC">BHC (HTS)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <button class="btn btn-primary w-100" onclick="submitTransfer()">Send</button>
-                    </div>
-                </div>
-<div class="mt-2 small text-muted">
-    <a href="#" data-bs-toggle="modal" data-bs-target="#qrModal">
-        View Sandbox QR
-    </a>
-    <span class="ms-2">(Note: This is a <code>static/demo QR</code>. Replace with real merchant QR for live payments.)</span>
-</div>
 
-<!-- QR Modal -->
-<div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content p-3 text-center">
-      <h6 id="qrModalLabel" class="mb-2">Sandbox QR Code</h6>
-      <img src="{{ url_for('static', filename='images/mpesa_qr.png') }}"
-           alt="Sandbox QR"
-           class="d-block mx-auto"
-           style="max-width:250px; border:1px solid #ddd; border-radius:8px; padding:4px;">
-      <div class="mt-2 small text-muted">
-        Replace with real merchant/paybill QR for production payments.
+            <div id="tf-status" class="mt-2"></div>
+          </div>
+        </div>
+
+        <div class="tab-content">
+          <!-- Users -->
+          <div class="tab-pane fade show active" id="usersTab">
+            <table class="table table-sm excel-table">
+              <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>KYC</th><th>Hedera ID</th></tr></thead>
+              <tbody id="usersBody"><tr><td colspan="5">Loading…</td></tr></tbody>
+            </table>
+          </div>
+
+          <!-- Loans -->
+          <div class="tab-pane fade" id="loansTab">
+            <table class="table table-sm excel-table">
+              <thead><tr><th>ID</th><th>User</th><th>Amount</th><th>Purpose</th><th>Status</th></tr></thead>
+              <tbody id="loansBody"><tr><td colspan="5">Loading…</td></tr></tbody>
+            </table>
+          </div>
+
+          <!-- KYC -->
+          <div class="tab-pane fade" id="kycTab">
+            <div class="mb-2 d-flex align-items-center">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="kycAutoToggle" onchange="toggleKYCMode()">
+                <label class="form-check-label" for="kycAutoToggle">Auto-Approve Mode</label>
+              </div>
+              <span id="kycModeStatus" class="ms-2 text-muted">[Manual]</span>
+            </div>
+            <table class="table table-sm excel-table">
+              <thead><tr><th>ID</th><th>User</th><th>Doc Type</th><th>Doc Number</th><th>Status</th><th>Hedera File ID</th><th>File Hash</th><th>Action</th></tr></thead>
+              <tbody id="kycBody"><tr><td colspan="8">Loading…</td></tr></tbody>
+            </table>
+          </div>
+
+          <!-- Deposits -->
+          <div class="tab-pane fade" id="depositsTab">
+            <table class="table table-sm excel-table">
+              <thead><tr><th>ID</th><th>User</th><th>Amount</th><th>Status</th></tr></thead>
+              <tbody id="depositsBody"><tr><td colspan="4">Loading…</td></tr></tbody>
+            </table>
+          </div>
+
+          <!-- Transactions -->
+          <div class="tab-pane fade" id="txTab">
+            <table class="table table-sm excel-table">
+              <thead><tr><th>ID</th><th>When</th><th>Type</th><th>Asset</th><th>Amount</th><th>From</th><th>To</th><th>Tx</th></tr></thead>
+              <tbody id="txBody"><tr><td colspan="8">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- QR Modal -->
+  <div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content p-3 text-center">
+        <h6 id="qrModalLabel" class="mb-2">Sandbox QR Code</h6>
+        <img src="{{ url_for('static', filename='images/mpesa_qr.png') }}" alt="Sandbox QR" class="d-block mx-auto" style="max-width:250px; border:1px solid #ddd; border-radius:8px; padding:4px;">
+        <div class="mt-2 small text-muted">Replace with real merchant/paybill QR for production payments.</div>
       </div>
     </div>
   </div>
-</div>
 
-                <div id="tf-status" class="mt-2"></div>
-            </div>
-        </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 
-        <!-- 🔹 Tabs -->
-        <ul class="nav nav-tabs mb-3" id="adminTabs">
-            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#usersTab">Users</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#loansTab">Loans</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#kycTab">KYC</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#depositsTab">Deposits</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#txTab">Transactions</a></li>
-        </ul>
-
-        <div class="tab-content">
-            <!-- Users -->
-            <div class="tab-pane fade show active" id="usersTab">
-                <table class="table table-sm excel-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Username</th>
-                            <th>Email</th>
-                            <th>KYC</th>
-                            <th>Hedera ID</th>
-                        </tr>
-                    </thead>
-                    <tbody id="usersBody">
-                        <tr>
-                            <td colspan="5">Loading…</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Loans -->
-            <div class="tab-pane fade" id="loansTab">
-                <table class="table table-sm excel-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>User</th>
-                            <th>Amount</th>
-                            <th>Purpose</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="loansBody">
-                        <tr>
-                            <td colspan="5">Loading…</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-<!-- KYC -->
-<div class="tab-pane fade" id="kycTab">
-
-    <!-- 🔀 Toggle KYC Mode -->
-    <div class="mb-2 d-flex align-items-center">
-        <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="kycAutoToggle" onchange="toggleKYCMode()">
-            <label class="form-check-label" for="kycAutoToggle">Auto-Approve Mode</label>
-        </div>
-        <span id="kycModeStatus" class="ms-2 text-muted">[Manual]</span>
-    </div>
-
-    <table class="table table-sm excel-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>User</th>
-                <th>Doc Type</th>
-                <th>Doc Number</th>
-                <th>Status</th>
-                <th>Hedera File ID</th>
-                <th>File Hash</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="kycBody">
-            <tr>
-                <td colspan="8">Loading…</td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-
-
-            <!-- Deposits -->
-            <div class="tab-pane fade" id="depositsTab">
-                <table class="table table-sm excel-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>User</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="depositsBody">
-                        <tr>
-                            <td colspan="4">Loading…</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Transactions -->
-            <div class="tab-pane fade" id="txTab">
-                <table class="table table-sm excel-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>When</th>
-                            <th>Type</th>
-                            <th>Asset</th>
-                            <th>Amount</th>
-                            <th>From</th>
-                            <th>To</th>
-                            <th>Tx</th>
-                        </tr>
-                    </thead>
-                    <tbody id="txBody">
-                        <tr>
-                            <td colspan="8">Loading…</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // 🔐 Optional: get admin identity
         async function getAdmin() {

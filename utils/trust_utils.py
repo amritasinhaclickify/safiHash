@@ -7,6 +7,10 @@ from cooperative.models import (
 from extensions import db
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
+from calendar import monthrange
+from dateutil.relativedelta import relativedelta
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -45,15 +49,35 @@ def calculate_trust_score(user_id: int, group_id: int, window_days: Optional[int
             except Exception:
                 cutoff = None
 
-        # 1) Deposit Consistency (counts within window)
-        gq = db.session.query(Deposit).filter_by(group_id=group_id)
-        uq = db.session.query(Deposit).filter_by(group_id=group_id, user_id=user_id)
-        if cutoff and _has_attr(Deposit, "created_at"):
-            gq = gq.filter(getattr(Deposit, "created_at") >= cutoff)
-            uq = uq.filter(getattr(Deposit, "created_at") >= cutoff)
-        total_group_deposits = gq.count()
-        user_deposits = uq.count()
-        params["Deposit Consistency"] = round(_safe_pct(user_deposits, total_group_deposits), 2)
+        # 1) Deposit Consistency (monthly: frequency + amount, clamped 0..100)
+        TARGET_BHC = 6 * 100.0
+
+        m_start = datetime(2025, 9, 25, 0, 0, 0)
+        m_end = m_start + relativedelta(months=6) - timedelta(microseconds=1)
+        m_days = (m_end - m_start).days + 1
+
+        user_month_q = (
+            db.session.query(
+                db.func.coalesce(db.func.sum(Deposit.amount), 0.0).label("sum_amount"),
+            )
+            .filter(Deposit.group_id == group_id, Deposit.user_id == user_id)
+        )
+        if _has_attr(Deposit, "created_at"):
+            user_month_q = user_month_q.filter(Deposit.created_at >= m_start, Deposit.created_at <= m_end)
+
+        user_month_amount = float(user_month_q.first()[0] or 0.0)
+
+        user_month_count_q = db.session.query(Deposit.id).filter(
+            Deposit.group_id == group_id, Deposit.user_id == user_id
+        )
+        if _has_attr(Deposit, "created_at"):
+            user_month_count_q = user_month_count_q.filter(Deposit.created_at >= m_start, Deposit.created_at <= m_end)
+        user_month_count = user_month_count_q.count()
+
+        freq_score = _clamp((user_month_count / float(m_days)) * 100.0)
+        amt_score = _clamp((user_month_amount / TARGET_BHC) * 100.0)
+
+        params["Deposit Consistency"] = round((freq_score + amt_score) / 2.0, 2)
 
         # 2) Repayment Timeliness (installment-based, respects window on due/paid_at)
         user_loans_q = db.session.query(Loan).filter_by(group_id=group_id, user_id=user_id)
