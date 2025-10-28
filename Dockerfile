@@ -1,10 +1,12 @@
-# Use an official slim Python image
-FROM python:3.13-slim
+# Use a stable Debian base where OpenJDK 17 is available
+FROM python:3.11-slim-bullseye
 
 # install system deps and OpenJDK (for pyjnius)
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential openjdk-17-jdk-headless git curl ca-certificates && \
+    apt-get install -y --no-install-recommends build-essential openjdk-17-jdk git curl ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
    
 
     rm -rf /var/lib/apt/lists/*
