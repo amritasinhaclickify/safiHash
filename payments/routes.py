@@ -401,5 +401,150 @@ def add_payment_config():
 
     return jsonify({"message": "Payment config added", "id": config.id}), 201
 
+#TokenSell
 
+@payments_bp.route("/sell", methods=["POST"])
+def sell_bhc():
+    """
+    Reverse flow: User sells BHC → receives KES via M-Pesa.
+    Expected JSON: { "user_id": int, "bhc_amount": "100" }
+    Steps:
+      1. Calculate KES value using rate (from config or env)
+      2. Transfer BHC from user → agency on Hedera
+      3. Create PaymentOrder + TokenSell entry
+      4. Trigger M-Pesa payout (simulated)
+    """
+    data = request.get_json() or {}
+    user_id = data.get("user_id")
+    bhc_amount = data.get("bhc_amount")
 
+    if not all([user_id, bhc_amount]):
+        return jsonify({"error": "user_id and bhc_amount required"}), 400
+
+    user = User.query.get(user_id)
+    if not user or not getattr(user, "hedera_account_id", None):
+        return jsonify({"error": "user not found or missing Hedera account"}), 404
+
+    try:
+        bhc_amt = Decimal(str(bhc_amount))
+    except Exception:
+        return jsonify({"error": "invalid bhc_amount"}), 400
+
+    # Rate (1 BHC = X KES)
+    rate = Decimal(os.getenv("BHC_SELL_RATE", "1.00"))
+    kes_value = bhc_amt * rate
+
+    # Get agency config
+    agency = PaymentConfig.query.filter_by(is_active=True).first()
+    if not agency:
+        return jsonify({"error": "no active agency config"}), 500
+
+    # Hedera token transfer user → agency
+    try:
+        token_id = os.getenv("BHC_TOKEN_ID")
+        decimals = int(os.getenv("BHC_DECIMALS", "2"))
+        minor_amount = int(round(float(bhc_amt) * (10 ** decimals)))
+
+        transfer_res = transfer_asset(
+            asset_type="BHC",
+            sender_account=user.hedera_account_id,
+            sender_privkey=user.hedera_private_key,
+            recipient_account=agency.hedera_account_id,
+            amount=minor_amount,
+            token_id=token_id
+        )
+        tx_id = transfer_res.get("tx_id") or transfer_res.get("transaction_id")
+    except Exception as e:
+        current_app.logger.exception("BHC transfer failed")
+        return jsonify({"error": "hedera transfer failed", "details": str(e)}), 502
+
+    # Create PaymentOrder + TokenSell
+    order_id = gen_order_id()
+    order = PaymentOrder(
+        order_id=order_id,
+        user_id=user.id,
+        amount=kes_value,
+        currency="KES",
+        msisdn=user.msisdn if hasattr(user, "msisdn") else "",
+        status="pending_settlement",
+        agency_id=agency.id,
+        agency_number=agency.mpesa_number,
+        hedera_tx_hash=tx_id,
+        created_at=datetime.utcnow(),
+    )
+    db.session.add(order)
+
+    from payments.models import TokenSell
+    sell = TokenSell(
+        user_id=user.id,
+        bhc_amount=bhc_amt,
+        kes_value=kes_value,
+        rate=rate,
+        order_id=order.order_id,
+        status="bhc_transferred",
+        hedera_tx_hash=tx_id,
+        created_at=datetime.utcnow()
+    )
+    db.session.add(sell)
+    db.session.commit()
+
+    # Simulated payout (M-Pesa API)
+    payout_ref = f"PAYOUT-{uuid.uuid4().hex[:10].upper()}"
+    sell.status = "completed"
+    sell.payout_ref = payout_ref
+    order.status = "completed"
+    order.mpesa_ref = payout_ref
+    order.paid_at = datetime.utcnow()
+    db.session.commit()
+
+    return jsonify({
+        "message": f"✅ {bhc_amt} BHC sold. KES {kes_value} will be credited to your M-Pesa soon.",
+        "order_id": order.order_id,
+        "hedera_tx": tx_id,
+        "payout_ref": payout_ref
+    }), 200
+@payments_bp.route("/payout", methods=["POST"])
+def confirm_payout():
+    """
+    Confirms M-Pesa payout for a BHC → KES sell order.
+    Expected JSON: { "order_id": str, "mpesa_ref": str }
+    Marks PaymentOrder + TokenSell as completed after M-Pesa payout confirmation.
+    """
+    data = request.get_json() or {}
+    order_id = data.get("order_id")
+    mpesa_ref = data.get("mpesa_ref")
+
+    if not all([order_id, mpesa_ref]):
+        return jsonify({"error": "order_id and mpesa_ref required"}), 400
+
+    order = PaymentOrder.query.filter_by(order_id=order_id).first()
+    if not order:
+        return jsonify({"error": "order not found"}), 404
+
+    from payments.models import TokenSell
+    sell = TokenSell.query.filter_by(order_id=order_id).first()
+    if not sell:
+        return jsonify({"error": "related TokenSell not found"}), 404
+
+    if order.status == "completed" and sell.status == "completed":
+        return jsonify({"message": "payout already confirmed"}), 200
+
+    # Simulate MPESA verification
+    verified = True  # replace with verify_mpesa_transaction() later if real
+    if not verified:
+        return jsonify({"error": "payout verification failed"}), 400
+
+    # Update statuses
+    order.status = "completed"
+    order.mpesa_ref = mpesa_ref
+    order.paid_at = datetime.utcnow()
+    sell.status = "completed"
+    sell.payout_ref = mpesa_ref
+    sell.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    return jsonify({
+        "message": f"✅ Payout confirmed for order {order_id}.",
+        "mpesa_ref": mpesa_ref,
+        "status": "completed"
+    }), 200

@@ -85,3 +85,24 @@ class PaymentConfig(db.Model):
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+class TokenSell(db.Model):
+    __tablename__ = "token_sells"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    bhc_amount = db.Column(db.Numeric(12, 2), nullable=False)
+    kes_value = db.Column(db.Numeric(12, 2), nullable=False)
+    rate = db.Column(db.Numeric(12, 2), nullable=False)  # BHC→KES rate at time of sale
+
+    # Payout + tracking
+    order_id = db.Column(db.String(64), db.ForeignKey("payment_orders.order_id"), nullable=True)
+    status = db.Column(
+        db.String(32),
+        default="initiated"
+        # initiated / bhc_transferred / payout_pending / completed / failed
+    )
+    hedera_tx_hash = db.Column(db.String(128), nullable=True)  # user→agency transfer
+    payout_ref = db.Column(db.String(64), nullable=True)       # M-Pesa payout reference
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

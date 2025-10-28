@@ -4,7 +4,7 @@ from flask import Blueprint, request, jsonify
 from finance.models import db, Loan, Wallet, Voting, TransactionHistory
 from datetime import datetime
 from finance.rewards import grant_reward, get_rewards, total_points
-from finance.loan_logic import disburse_loan as core_disburse_loan  
+from finance.loan_logic import disburse_loan as core_disburse_loan
 from ai_engine.smart_contracts import disburse_loan
 from ai_engine.fraud_detector import detect_fraud
 from finance.models import FraudLog
@@ -16,16 +16,18 @@ import traceback
 import json
 from ai_engine.smart_contracts import process_repayment as sc_process_repayment
 from jnius import JavaException  # 👈 catch Hedera Java SDK errors cleanly
-
+from finance.models import OutboxTransfer
 
 finance_bp = Blueprint('finance', __name__, url_prefix='/api/finance')
+
+
 # ✅ money transfer
 @finance_bp.route('/transfer', methods=['POST'])
 def transfer_money():
     data = request.get_json() or {}
-    sender_id     = data.get("sender_id")
-    recipient_id  = data.get("recipient_id")
-    asset_type    = (data.get("asset_type") or "").upper()  # force explicit
+    sender_id = data.get("sender_id")
+    recipient_id = data.get("recipient_id")
+    asset_type = (data.get("asset_type") or "").upper()  # force explicit
 
     # validate asset type
     if asset_type not in {"HBAR", "BHC"}:
@@ -72,7 +74,6 @@ def transfer_money():
             return jsonify({"error": "Invalid BHC amount"}), 400
         transfer_amount = minor_amount  # send in minor units
 
-
     # ensure recipient is token-ready (for BHC only)
     if asset_type == "BHC":
         from hedera_sdk.wallet import ensure_token_ready_for_account
@@ -89,7 +90,6 @@ def transfer_money():
                 )
             except Exception as e:
                 print(f"⚠️ Token-ready setup failed for recipient {recipient.id}: {e}")
-    
 
     # perform transfer
     try:
@@ -102,7 +102,7 @@ def transfer_money():
             token_id=token_id
         )
 
-    # normalize tx id
+        # normalize tx id
         tx_id = res.get("transaction_id") or res.get("tx_id") or ""
 
         txn = TransactionHistory(
@@ -124,10 +124,10 @@ def transfer_money():
         db.session.commit()
 
         return jsonify({
-           "message": f"✅ {amount} {asset_type} sent {sender.username} → {recipient.username} (tx_id: {tx_id})",
-           "asset_type": asset_type,
-           "token_id": token_id,
-           "tx_id": tx_id
+            "message": f"✅ {amount} {asset_type} sent {sender.username} → {recipient.username} (tx_id: {tx_id})",
+            "asset_type": asset_type,
+            "token_id": token_id,
+            "tx_id": tx_id
         }), 200
 
 
@@ -138,7 +138,33 @@ def transfer_money():
     except Exception as e:
         db.session.rollback()
         traceback.print_exc()
+
+        # 🟡 Save to outbox if DB commit failed after on-chain success
+        from finance.models import OutboxTransfer
+        try:
+            pending = OutboxTransfer(
+                sender_id=sender.id,
+                recipient_id=recipient.id,
+                amount=amount,
+                asset_type=asset_type,
+                token_id=token_id,
+                purpose=f"Offline save after network error ({asset_type})",
+                status="pending",
+                hedera_tx_id=tx_id if 'tx_id' in locals() else None,
+                hedera_path=json.dumps([sender.hedera_account_id, recipient.hedera_account_id]),
+                meta=json.dumps(res) if 'res' in locals() else None,
+                last_error=str(e),
+            )
+            db.session.add(pending)
+            db.session.commit()
+            print(f"⚠️ Transfer saved to outbox (tx_id={pending.hedera_tx_id}) for retry.")
+        except Exception as inner:
+            print(f"❌ Outbox save failed too: {inner}")
+        # 🟡 End fallback
+
         return jsonify({"error": "Transfer failed", "details": str(e)}), 500
+
+
 
 @finance_bp.route('/transactions', methods=['GET'])
 def get_all_transaction_history():
@@ -169,6 +195,8 @@ def get_all_transaction_history():
             "path": path,
         })
     return jsonify(results), 200
+
+
 # ---------- BHC helper admin endpoints (associate + KYC) ----------
 @finance_bp.route('/bhc/setup-user', methods=['POST'])
 def bhc_setup_user():
@@ -186,7 +214,7 @@ def bhc_setup_user():
         return jsonify({"error": "user_id required"}), 400
 
     token_id = os.getenv("BHC_TOKEN_ID")
-    op_key   = os.getenv("HEDERA_OPERATOR_KEY")
+    op_key = os.getenv("HEDERA_OPERATOR_KEY")
     if not token_id:
         return jsonify({"error": "Missing BHC_TOKEN_ID in env"}), 500
     if not op_key:
@@ -226,7 +254,7 @@ def bhc_setup_user():
             )
 
             assoc = ready.get("associate")
-            kyc   = ready.get("grant_kyc")
+            kyc = ready.get("grant_kyc")
 
             out["associate"] = assoc
             out["kyc"] = kyc
@@ -245,7 +273,7 @@ def bhc_setup_user():
             msg = str(je)
             print(f"⚠️ JavaException during BHC setup (attempt {attempt}) for user {user_id}: {msg}")
             already_assoc = "TOKEN_ALREADY_ASSOCIATED_TO_ACCOUNT" in msg
-            already_kyc   = "ACCOUNT_KYC_ALREADY_GRANTED_FOR_TOKEN" in msg
+            already_kyc = "ACCOUNT_KYC_ALREADY_GRANTED_FOR_TOKEN" in msg
             if already_assoc or already_kyc:
                 user.kyc_status = "verified"
                 db.session.commit()
@@ -292,6 +320,8 @@ def bhc_setup_all_verified():
             errors.append({"user_id": u.id, "account": u.hedera_account_id, "error": str(e)})
 
     return jsonify({"processed": len(users), "success": done, "errors": errors}), 200
+
+
 # -------------------------------------------------------------------
 @finance_bp.route('/bhc/associate', methods=['POST'])
 def bhc_associate_with_privkey():
@@ -351,4 +381,4 @@ def bhc_associate_with_privkey():
 
     return jsonify({"message": "Association/KYC processed", **out}), 200
 
-    
+

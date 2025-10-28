@@ -34,6 +34,7 @@ from flask import render_template
 from cooperative.models import GroupProfitPool
 from utils.audit_logger import log_audit_action
 from utils.consensus_helper import publish_to_consensus as consensus_publish
+from datetime import date
 
 
 coop_bp = Blueprint("cooperative", __name__, url_prefix="/api/coops")
@@ -2540,6 +2541,7 @@ def trust_dashboard(slug, user_id):
     return render_template(
         "trust_dashboard.html",
         user_id=user_id,
+        group_id=grp.id,
         group_name=grp.name,
         group_slug=grp.slug
     )
@@ -2564,29 +2566,118 @@ def trustscore_weekly(slug, user_id):
     if not membership:
         return jsonify({"error": "Not a group member"}), 403
 
-
     try:
         days = int(request.args.get("days", 7))
     except Exception:
         days = 7
+
     # 🔹 Fetch user info for display
     from users.models import User
     user = User.query.get(user_id)
     if not user:
-        return jsonify({"error": "User not found"}), 404    
+        return jsonify({"error": "User not found"}), 404
 
+    # ✅ Existing: calculate trust score (from trust_utils)
     result = calculate_trust_score(user_id=user_id, group_id=grp.id, window_days=days)
-    
-    # include metadata
+    overall = float(result.get("overall", 0.0))
+
+    # ----------------------------------------------------------
+    # 🆕 NEW BLOCK START: Save TrustScore + TrustScoreHistory (FIXED)
+    # ----------------------------------------------------------
+
+    now = datetime.utcnow()
+    snapshot_today = date.today()
+    reason = "AUTO_REFRESH"
+
+    # 1) Upsert TrustScore (user_id + group_id)
+    trust = TrustScore.query.filter_by(user_id=user_id, group_id=grp.id).first()
+    if trust:
+        trust.score = round(overall, 2)
+        trust.updated_at = now
+    else:
+        trust = TrustScore(user_id=user_id, group_id=grp.id, score=round(overall, 2), updated_at=now)
+        db.session.add(trust)
+
+    # Make sure DB/session state is flushed so trust.score is available and any DB-level constraints are applied
+    # (flush, NOT commit — we'll commit after history logic)
+    db.session.flush()
+
+    # 2) Save in TrustScoreHistory (avoid UNIQUE violation & Decimal/float issues)
+    from sqlalchemy.exc import IntegrityError
+
+    # Try to find existing record for same day & reason to avoid UNIQUE constraint collisions
+    existing = TrustScoreHistory.query.filter_by(
+        user_id=user_id, group_id=grp.id, reason=reason, snapshot_date=snapshot_today
+    ).first()
+
+    try:
+        if existing:
+            prev_score = float(existing.score_after)
+            # update only if meaningful change or stale
+            if abs(prev_score - float(trust.score)) >= 0.1 or (now - existing.created_at) > timedelta(minutes=5):
+                existing.delta = round(float(trust.score) - prev_score, 2)
+                existing.score_after = round(float(trust.score), 2)
+                existing.created_at = now
+                db.session.add(existing)
+        else:
+            # compute delta from current TrustScore (already flushed)
+            prev_score = 0.0
+            # attempt to fetch previous history row to compute actual delta if needed
+            prev = (
+                TrustScoreHistory.query
+                .filter_by(user_id=user_id, group_id=grp.id)
+                .order_by(TrustScoreHistory.created_at.desc())
+                .first()
+            )
+            if prev:
+                prev_score = float(prev.score_after)
+
+            hist = TrustScoreHistory(
+                user_id=user_id,
+                group_id=grp.id,
+                delta=round(float(trust.score) - prev_score, 2),
+                score_after=round(float(trust.score), 2),
+                reason=reason,
+                ref_table=None,
+                ref_id=None,
+                created_at=now,
+                snapshot_date=snapshot_today
+            )
+            db.session.add(hist)
+
+        db.session.commit()
+
+    except IntegrityError:
+        # concurrent insert raced — rollback & update the existing today's row
+        db.session.rollback()
+        existing = TrustScoreHistory.query.filter_by(
+            user_id=user_id, group_id=grp.id, reason=reason, snapshot_date=snapshot_today
+        ).first()
+        if existing:
+            prev_score = float(existing.score_after)
+            if abs(prev_score - float(trust.score)) >= 0.1 or (now - existing.created_at) > timedelta(minutes=5):
+                existing.delta = round(float(trust.score) - prev_score, 2)
+                existing.score_after = round(float(trust.score), 2)
+                existing.created_at = now
+                db.session.add(existing)
+                db.session.commit()
+
+    # ----------------------------------------------------------
+    # 🆕 NEW BLOCK END
+    # ----------------------------------------------------------
+
+
+    # ✅ Keep your existing response same
     result_meta = {
         "group_id": grp.id,
         "group_slug": grp.slug,
         "group_name": grp.name,
         "user_id": user_id,
         "window_days": days,
-        "user_name": user.username, 
-        "calculated_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        "user_name": user.username,
+        "calculated_at": now.strftime("%Y-%m-%d %H:%M:%S")
     }
+
     return jsonify({"meta": result_meta, "trust": result}), 200
 
 
@@ -2651,11 +2742,11 @@ def trustscore_trend(slug, user_id):
     if not grp:
         return jsonify({"error": "Group not found"}), 404
 
-    # ?days=N (default 30). days<=0 => all history
+    # ?days=N (default 180 → 6 months). days<=0 => all history
     try:
-        days = int(request.args.get("days", 30))
+        days = int(request.args.get("days", 180))   # 🔹 default 6 months
     except Exception:
-        days = 30
+        days = 180
 
     q = (TrustScoreHistory.query
          .filter(TrustScoreHistory.user_id == user_id,

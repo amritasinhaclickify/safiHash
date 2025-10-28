@@ -9,10 +9,10 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 from calendar import monthrange
 from dateutil.relativedelta import relativedelta
-
-
+from datetime import date
 
 logger = logging.getLogger(__name__)
+
 
 def _safe_pct(numerator: float, denominator: float) -> float:
     """Return percentage (0..100) safely; handle zero denominator."""
@@ -24,9 +24,12 @@ def _safe_pct(numerator: float, denominator: float) -> float:
         logger.exception("Error in _safe_pct: %s", e)
         return 0.0
 
+
 def _has_attr(model, attr_name: str) -> bool:
     """Safer hasattr check for SQLAlchemy model class attributes."""
     return hasattr(model, attr_name) and getattr(model, attr_name) is not None
+
+
 def _clamp(x: float, lo: float = 0.0, hi: float = 100.0) -> float:
     try:
         return max(lo, min(hi, float(x)))
@@ -49,11 +52,12 @@ def calculate_trust_score(user_id: int, group_id: int, window_days: Optional[int
             except Exception:
                 cutoff = None
 
-        # 1) Deposit Consistency (monthly: frequency + amount, clamped 0..100)
-        TARGET_BHC = 6 * 100.0
+        # 1) Deposit Consistency (rolling 6 months: frequency + amount, clamped 0..100)
+        TARGET_BHC = 6 * 100.0  # target = 100 BHC per month × 6 months
 
-        m_start = datetime(2025, 9, 25, 0, 0, 0)
-        m_end = m_start + relativedelta(months=6) - timedelta(microseconds=1)
+        # 🔹 हमेशा आज से पीछे 6 months तक का window
+        m_end = datetime.utcnow()
+        m_start = m_end - relativedelta(months=6)
         m_days = (m_end - m_start).days + 1
 
         user_month_q = (
@@ -139,65 +143,61 @@ def calculate_trust_score(user_id: int, group_id: int, window_days: Optional[int
 
         params["On-time Repayments Ratio"] = round(_safe_pct(ontime_repayments, total_repayments), 2)
 
-        # 4) Voting Participation (uses VotingSession.created_at)
+        # 4) Voting Participation (session-level participation)
         sessions_q = db.session.query(VotingSession).filter_by(group_id=group_id)
         if cutoff and _has_attr(VotingSession, "created_at"):
             sessions_q = sessions_q.filter(getattr(VotingSession, "created_at") >= cutoff)
         total_sessions = sessions_q.count()
 
-        votes_q = db.session.query(VoteDetail).join(
-            VotingSession, VoteDetail.session_id == VotingSession.id
-        ).filter(
-            VoteDetail.voter_id == user_id,
-            VotingSession.group_id == group_id
+        # user ne kin sessions me vote diya (distinct session_id)
+        user_sessions = (
+            db.session.query(db.func.count(db.distinct(VoteDetail.session_id)))
+            .join(VotingSession, VoteDetail.session_id == VotingSession.id)
+            .filter(
+                VoteDetail.voter_id == user_id,
+                VotingSession.group_id == group_id
+            )
         )
-        # ⚠️ सिर्फ session window filter करो, VoteDetail.created_at पर ज़रूरी नहीं
-        user_votes = votes_q.count()
+        if cutoff and _has_attr(VotingSession, "created_at"):
+            user_sessions = user_sessions.filter(getattr(VotingSession, "created_at") >= cutoff)
 
-        params["Voting Participation"] = round(_safe_pct(user_votes, total_sessions), 2)
+        user_participated_sessions = user_sessions.scalar() or 0
 
-        # --- 5) Loan Request Frequency (inverse normalized) ---
-        from sqlalchemy import or_
+        params["Voting Participation"] = round(
+            _safe_pct(user_participated_sessions, total_sessions), 2
+        )
 
+        # 5) Loan Request Frequency (inverse normalized with neutral floor)
         total_members = db.session.query(GroupMembership).filter_by(group_id=group_id).count() or 1
-
-        # base queries
         lr_user_q = db.session.query(LoanRequest).filter_by(group_id=group_id, user_id=user_id)
         lr_total_q = db.session.query(LoanRequest).filter_by(group_id=group_id)
 
-        # time-window with fallbacks if created_at missing
         if cutoff and _has_attr(LoanRequest, "created_at"):
-            # include rows where created_at >= cutoff OR (created_at is NULL but linked Loan/VotingSession time >= cutoff)
-            lr_user_q = lr_user_q.filter(
-                or_(
-                    getattr(LoanRequest, "created_at") >= cutoff,
-                    getattr(LoanRequest, "created_at") == None  # noqa
-                )
-            )
-            lr_total_q = lr_total_q.filter(
-                or_(
-                    getattr(LoanRequest, "created_at") >= cutoff,
-                    getattr(LoanRequest, "created_at") == None  # noqa
-                )
-            )
+            from sqlalchemy import or_
+            lr_user_q = lr_user_q.filter(or_(getattr(LoanRequest, "created_at") >= cutoff,
+                                             getattr(LoanRequest, "created_at") == None))
+            lr_total_q = lr_total_q.filter(or_(getattr(LoanRequest, "created_at") >= cutoff,
+                                               getattr(LoanRequest, "created_at") == None))
 
         user_loan_requests = lr_user_q.count()
-        total_requests = lr_total_q.count() or 0
+        total_requests = lr_total_q.count()
         avg_requests_per_member = (total_requests / total_members) if total_members else 0
 
+        NEUTRAL_NO_REQUESTS = 70.0
         if avg_requests_per_member <= 0:
-            loan_freq_score = 100.0
+            params["Loan Request Frequency"] = None
         else:
-            ratio = user_loan_requests / avg_requests_per_member
-            if ratio <= 1:
-                loan_freq_score = 100.0
-            elif ratio >= 4:
-                loan_freq_score = 0.0
+            if user_loan_requests == 0:
+                loan_freq_score = NEUTRAL_NO_REQUESTS
             else:
-                # 1x → 100, 2x → 50, 3x → 25, 4x+ → 0
-                loan_freq_score = 100.0 * (4.0 - ratio) / 3.0
-
-        params["Loan Request Frequency"] = round(loan_freq_score, 2)
+                ratio = user_loan_requests / avg_requests_per_member
+                if ratio <= 1:
+                    loan_freq_score = 100.0
+                elif ratio >= 4:
+                    loan_freq_score = 0.0
+                else:
+                    loan_freq_score = 100.0 * (4.0 - ratio) / 3.0
+            params["Loan Request Frequency"] = round(_clamp(loan_freq_score), 2)
 
         # --- 6) Loan Approval Rate ---
         APPROVED_STATES = {"approved", "disbursed", "active", "closed"}
@@ -223,38 +223,40 @@ def calculate_trust_score(user_id: int, group_id: int, window_days: Optional[int
         user_lr_approved = user_lr_approved_q.count()
         params["Loan Approval Rate"] = round(_safe_pct(user_lr_approved, user_lr_total), 2)
 
-        # 7) Disbursal Timeliness (avg days: approved/created -> disbursed, in window)
+        # 7) Disbursal Timeliness (avg days: approved/created -> disbursed)
         approved_loans_q = db.session.query(Loan).filter_by(group_id=group_id, user_id=user_id)
         if cutoff:
             from sqlalchemy import or_
             conds = []
-            if _has_attr(Loan, "disbursed_at"):
-                conds.append(getattr(Loan, "disbursed_at") >= cutoff)
-            if _has_attr(Loan, "approved_at"):
-                conds.append(getattr(Loan, "approved_at") >= cutoff)
-            if _has_attr(Loan, "created_at"):
-                conds.append(getattr(Loan, "created_at") >= cutoff)
-            if conds:
-                approved_loans_q = approved_loans_q.filter(or_(*conds))
+            if _has_attr(Loan, "disbursed_at"): conds.append(getattr(Loan, "disbursed_at") >= cutoff)
+            if _has_attr(Loan, "approved_at"):  conds.append(getattr(Loan, "approved_at") >= cutoff)
+            if _has_attr(Loan, "created_at"):   conds.append(getattr(Loan, "created_at") >= cutoff)
+            if conds: approved_loans_q = approved_loans_q.filter(or_(*conds))
+
         approved_loans = approved_loans_q.all()
-        total_d = 0.0
-        count_d = 0
+        total_d, count_d = 0.0, 0
         for ln in approved_loans:
             disbursed_at = getattr(ln, "disbursed_at", None)
             base_time = getattr(ln, "approved_at", None) or getattr(ln, "created_at", None)
             if disbursed_at and base_time:
-                total_d += (disbursed_at - base_time).total_seconds() / (3600 * 24)
+                total_d += (disbursed_at - base_time).total_seconds() / 86400.0
                 count_d += 1
+
         if count_d == 0:
-            disbursal_score = 0.0  # ❗अब no-data पर 100 नहीं, 0
+            params["Disbursal Timeliness"] = None
         else:
             avg_days = total_d / count_d
-            if avg_days <= 1:   disbursal_score = 100.0
-            elif avg_days <= 7: disbursal_score = 75.0
-            elif avg_days <= 14: disbursal_score = 50.0
-            elif avg_days <= 30: disbursal_score = 25.0
-            else:                disbursal_score = 0.0
-        params["Disbursal Timeliness"] = round(disbursal_score, 2)
+            if avg_days <= 1:
+                score = 100.0
+            elif avg_days <= 7:
+                score = 75.0
+            elif avg_days <= 14:
+                score = 50.0
+            elif avg_days <= 30:
+                score = 25.0
+            else:
+                score = 0.0
+            params["Disbursal Timeliness"] = round(score, 2)
 
         # 8) Self-Repayment Rate (among repayments for user's loans)
         tr_q = db.session.query(Repayment).join(Loan, Repayment.loan_id == Loan.id).filter(
@@ -264,51 +266,71 @@ def calculate_trust_score(user_id: int, group_id: int, window_days: Optional[int
             tr_q = tr_q.filter(getattr(Repayment, "created_at") >= cutoff)
         total_repayments_for_user_loans = tr_q.count()
         if total_repayments_for_user_loans == 0:
-            params["Self-Repayment Rate"] = 0.0   # ❗no-data -> 0
+            params["Self-Repayment Rate"] = 0.0  # ❗no-data -> 0
         else:
             self_paid = tr_q.filter(Repayment.payer_id == user_id).count()
             params["Self-Repayment Rate"] = round(_safe_pct(self_paid, total_repayments_for_user_loans), 2)
 
-        # 9) Third-Party Payment Flag (higher = less suspicious)
-        pa_q = db.session.query(PaymentAudit).filter(
+        # 9) Third-Party Payment Flag (higher = better)
+        # count DISTINCT repayments that were flagged SUSPECT
+        pa_q = db.session.query(PaymentAudit.payment_id).filter(
             PaymentAudit.group_id == group_id,
             PaymentAudit.borrower_id == user_id,
-            PaymentAudit.status == "SUSPECT"
+            PaymentAudit.status == "SUSPECT",
+            PaymentAudit.payment_id != None  # noqa
         )
         if cutoff and _has_attr(PaymentAudit, "created_at"):
             pa_q = pa_q.filter(getattr(PaymentAudit, "created_at") >= cutoff)
-        suspect_count = pa_q.count()
-        if total_repayments_for_user_loans == 0:
-            third_party_score = 0.0  # ❗कोई repayment नहीं तो 100% मत दो
-        else:
-            suspect_percent = _safe_pct(suspect_count, total_repayments_for_user_loans)
-            third_party_score = max(0.0, 100.0 - suspect_percent)
-        params["Third-Party Payment Flag"] = round(third_party_score, 2)
 
-        # 10) Profit Contribution Share (sum amounts in window)
-        total_deposit_sum_q = db.session.query(db.func.coalesce(db.func.sum(Deposit.amount), 0)).filter_by(group_id=group_id)
-        user_deposit_sum_q = db.session.query(db.func.coalesce(db.func.sum(Deposit.amount), 0)).filter_by(group_id=group_id, user_id=user_id)
+        suspect_distinct = pa_q.distinct(PaymentAudit.payment_id).count()
+
+        # denominator = DISTINCT repayments for user's loans
+        repay_den_q = (
+            db.session.query(Repayment.id)
+            .join(Loan, Repayment.loan_id == Loan.id)
+            .filter(Loan.group_id == group_id, Loan.user_id == user_id)
+        )
+        if cutoff and _has_attr(Repayment, "created_at"):
+            repay_den_q = repay_den_q.filter(getattr(Repayment, "created_at") >= cutoff)
+        repay_den = repay_den_q.distinct(Repayment.id).count()
+
+        if repay_den == 0:
+            params["Third-Party Payment Flag"] = None
+        else:
+            suspect_pct = _safe_pct(suspect_distinct, repay_den)
+            params["Third-Party Payment Flag"] = round(max(0.0, 100.0 - suspect_pct), 2)
+
+        # 10) Profit Contribution Share
+        total_deposit_sum_q = db.session.query(db.func.coalesce(db.func.sum(Deposit.amount), 0)).filter_by(
+            group_id=group_id)
+        user_deposit_sum_q = db.session.query(db.func.coalesce(db.func.sum(Deposit.amount), 0)).filter_by(
+            group_id=group_id, user_id=user_id)
         if cutoff and _has_attr(Deposit, "created_at"):
             total_deposit_sum_q = total_deposit_sum_q.filter(getattr(Deposit, "created_at") >= cutoff)
             user_deposit_sum_q = user_deposit_sum_q.filter(getattr(Deposit, "created_at") >= cutoff)
+
         total_deposit_sum = float(total_deposit_sum_q.scalar() or 0.0)
         user_deposit_sum = float(user_deposit_sum_q.scalar() or 0.0)
-        params["Profit Contribution Share"] = round(_safe_pct(user_deposit_sum, total_deposit_sum), 2)
+
+        if total_deposit_sum <= 0:
+            params["Profit Contribution Share"] = None
+        else:
+            params["Profit Contribution Share"] = round(_safe_pct(user_deposit_sum, total_deposit_sum), 2)
 
     except Exception as e:
         logger.exception("Error calculating trust score for user %s in group %s: %s", user_id, group_id, e)
         for k in [
-            "Deposit Consistency","Repayment Timeliness","On-time Repayments Ratio",
-            "Voting Participation","Loan Request Frequency","Loan Approval Rate",
-            "Disbursal Timeliness","Self-Repayment Rate","Third-Party Payment Flag",
+            "Deposit Consistency", "Repayment Timeliness", "On-time Repayments Ratio",
+            "Voting Participation", "Loan Request Frequency", "Loan Approval Rate",
+            "Disbursal Timeliness", "Self-Repayment Rate", "Third-Party Payment Flag",
             "Profit Contribution Share"
         ]:
-            params.setdefault(k, 0.0)
+            params.setdefault(k, None)
 
-    # Overall = simple mean
+    # Overall = simple mean (skip None / non-numeric)
     try:
-        vals = list(params.values()) if params else [0.0]
-        overall = _clamp(round(sum(vals) / max(1, len(vals)), 2))
+        numeric_vals = [v for v in params.values() if isinstance(v, (int, float))]
+        overall = _clamp(round(sum(numeric_vals) / max(1, len(numeric_vals)), 2)) if numeric_vals else 0.0
     except Exception as e:
         logger.exception("Error computing overall trust score: %s", e)
         overall = 0.0

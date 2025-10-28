@@ -173,3 +173,59 @@ class DepositRequest(db.Model):
             "status": self.status,
             "timestamp": self.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
         }
+# ---------- Outbox / Offline transfer models ----------
+from datetime import datetime
+from extensions import db  # if your file uses `extensions.db` for SQLAlchemy
+
+class OutboxTransfer(db.Model):
+    __tablename__ = "outbox_transfers"
+
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)   # who requested the transfer
+    recipient_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True) # optional user target
+    amount = db.Column(db.Float, nullable=False)
+    asset_type = db.Column(db.String(16), nullable=False, default="HBAR")         # 'HBAR' | 'BHC'
+    token_id = db.Column(db.String(64), nullable=True)                            # HTS token id if BHC
+    purpose = db.Column(db.String(255), nullable=True)
+    status = db.Column(db.String(32), nullable=False, default="pending")          # pending, sending, sent, failed
+    attempts = db.Column(db.Integer, default=0)                                   # number of send attempts
+    last_error = db.Column(db.Text, nullable=True)
+    hedera_tx_id = db.Column(db.String(255), nullable=True)                       # last successful tx id
+    hedera_path = db.Column(db.Text, nullable=True)                               # optional path/trace JSON
+    meta = db.Column(db.Text, nullable=True)                                      # raw payload / context
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "sender_id": self.sender_id,
+            "recipient_id": self.recipient_id,
+            "amount": self.amount,
+            "asset_type": self.asset_type,
+            "token_id": self.token_id,
+            "purpose": self.purpose,
+            "status": self.status,
+            "attempts": self.attempts,
+            "last_error": self.last_error,
+            "hedera_tx_id": self.hedera_tx_id,
+            "hedera_path": self.hedera_path,
+            "meta": self.meta,
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "updated_at": self.updated_at.strftime("%Y-%m-%d %H:%M:%S"),
+        }
+
+
+class OutboxAttempt(db.Model):
+    __tablename__ = "outbox_attempts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    outbox_id = db.Column(db.Integer, db.ForeignKey("outbox_transfers.id"), nullable=False)
+    attempt_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    success = db.Column(db.Boolean, nullable=False, default=False)
+    hedera_tx_id = db.Column(db.String(255), nullable=True)
+    response = db.Column(db.Text, nullable=True)    # full response / error text
+    error = db.Column(db.Text, nullable=True)
+
+    # relationship for convenience (optional)
+    outbox = db.relationship("OutboxTransfer", backref=db.backref("attempts_list", lazy="dynamic"))

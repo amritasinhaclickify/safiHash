@@ -1,6 +1,6 @@
 # cooperative/models.py
 from extensions import db
-from datetime import datetime
+from datetime import datetime, date
 from sqlalchemy import Numeric
 
 class CooperativeGroup(db.Model):
@@ -106,13 +106,24 @@ class Repayment(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+# ===== TRUST SCORE =====
 class TrustScore(db.Model):
     __tablename__ = "trust_scores"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), unique=True, nullable=False)
+
+    # 🔹 Each user will have one TrustScore per group
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    group_id = db.Column(db.Integer, db.ForeignKey("cooperative_groups.id"), nullable=False, index=True)
+
     score = db.Column(db.Float, default=0.0)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # ✅ Prevent duplicate entries for same user-group
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "group_id", name="uq_user_group_trustscore"),
+    )
+
 
 
 class Alert(db.Model):
@@ -280,6 +291,16 @@ class TrustScoreHistory(db.Model):
     ref_id = db.Column(db.Integer, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
     onchain_tx = db.Column(db.String(128), nullable=True, index=True)  # Hedera tx hash (proof)
+        # 👇 नया कॉलम + इंडेक्स
+    snapshot_date = db.Column(db.Date, nullable=False, default=date.today, index=True)
+
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "user_id", "group_id", "reason", "snapshot_date",
+            name="uq_trustscore_daily"
+        ),
+    )
 
 
 # ===== UPDATED: CreditLedger (with interest accrual) =====

@@ -89,7 +89,7 @@
   </div>
 </div>
 
-<!-- SECOND ROW: Parameters (with tooltip explanations) -->
+<!-- SECOND ROW: Parameters (with ultra-clear tooltips) -->
 <div class="row row-cols-2 row-cols-md-5 g-3 mb-4" id="paramGrid">
 
   <div class="col">
@@ -100,10 +100,12 @@
         Deposit Consistency
         <i class="bi bi-info-circle ms-1 text-secondary"
            data-bs-toggle="tooltip"
-           title="Measures how regularly the member deposits compared to the expected schedule. Extra deposits add a small bonus.">
+           title="Last 6 months: how steady and how much you saved.">
         </i>
       </small>
-      <div class="progress mt-2" style="height:6px;"><div class="progress-bar" style="width:0%"></div></div>
+      <div class="progress mt-2" style="height:6px;">
+        <div class="progress-bar" style="width:0%"></div>
+      </div>
     </div>
   </div>
 
@@ -115,10 +117,12 @@
         Repayment Timeliness
         <i class="bi bi-info-circle ms-1 text-secondary"
            data-bs-toggle="tooltip"
-           title="Percentage of installments paid on or before due date (with small grace period).">
+           title="How often your EMIs were paid on or before the due date.">
         </i>
       </small>
-      <div class="progress mt-2" style="height:6px;"><div class="progress-bar" style="width:0%"></div></div>
+      <div class="progress mt-2" style="height:6px;">
+        <div class="progress-bar" style="width:0%"></div>
+      </div>
     </div>
   </div>
 
@@ -130,10 +134,12 @@
         On-time Repayments
         <i class="bi bi-info-circle ms-1 text-secondary"
            data-bs-toggle="tooltip"
-           title="Ratio of repayments actually applied on or before due date, at transaction level.">
+           title="Payments that reached on time, out of all scheduled ones.">
         </i>
       </small>
-      <div class="progress mt-2" style="height:6px;"><div class="progress-bar" style="width:0%"></div></div>
+      <div class="progress mt-2" style="height:6px;">
+        <div class="progress-bar" style="width:0%"></div>
+      </div>
     </div>
   </div>
 
@@ -145,10 +151,12 @@
         Voting Participation
         <i class="bi bi-info-circle ms-1 text-secondary"
            data-bs-toggle="tooltip"
-           title="Percentage of group voting sessions in which the member actively participated.">
+           title="How often you took part in group votes.">
         </i>
       </small>
-      <div class="progress mt-2" style="height:6px;"><div class="progress-bar" style="width:0%"></div></div>
+      <div class="progress mt-2" style="height:6px;">
+        <div class="progress-bar" style="width:0%"></div>
+      </div>
     </div>
   </div>
 
@@ -160,10 +168,12 @@
         Loan Requests
         <i class="bi bi-info-circle ms-1 text-secondary"
            data-bs-toggle="tooltip"
-           title="Balanced use of loan requests compared to group average. Too many requests reduce score.">
+           title="Are you asking for loans more than most members? (More = lower score; zero = neutral)">
         </i>
       </small>
-      <div class="progress mt-2" style="height:6px;"><div class="progress-bar" style="width:0%"></div></div>
+      <div class="progress mt-2" style="height:6px;">
+        <div class="progress-bar" style="width:0%"></div>
+      </div>
     </div>
   </div>
 
@@ -175,10 +185,12 @@
         Loan Disbursal
         <i class="bi bi-info-circle ms-1 text-secondary"
            data-bs-toggle="tooltip"
-           title="How quickly approved loans are disbursed. Faster disbursal improves score.">
+           title="How quickly approved loans were disbursed to you. (No loans = N/A)">
         </i>
       </small>
-      <div class="progress mt-2" style="height:6px;"><div class="progress-bar" style="width:0%"></div></div>
+      <div class="progress mt-2" style="height:6px;">
+        <div class="progress-bar" style="width:0%"></div>
+      </div>
     </div>
   </div>
 
@@ -190,10 +202,12 @@
         Self Repayments
         <i class="bi bi-info-circle ms-1 text-secondary"
            data-bs-toggle="tooltip"
-           title="Percentage of repayments made by the borrower themselves (vs. third-party).">
+           title="Repayments you made yourself (not by someone else).">
         </i>
       </small>
-      <div class="progress mt-2" style="height:6px;"><div class="progress-bar" style="width:0%"></div></div>
+      <div class="progress mt-2" style="height:6px;">
+        <div class="progress-bar" style="width:0%"></div>
+      </div>
     </div>
   </div>
 
@@ -205,10 +219,12 @@
         Third-party Repayments
         <i class="bi bi-info-circle ms-1 text-secondary"
            data-bs-toggle="tooltip"
-           title="Lower scores mean more repayments are coming from others instead of the borrower.">
+           title="Fewer outsider-paid installments means a better score. (We check audit flags)">
         </i>
       </small>
-      <div class="progress mt-2" style="height:6px;"><div class="progress-bar" style="width:0%"></div></div>
+      <div class="progress mt-2" style="height:6px;">
+        <div class="progress-bar" style="width:0%"></div>
+      </div>
     </div>
   </div>
 
@@ -220,10 +236,12 @@
         Loan Approval
         <i class="bi bi-info-circle ms-1 text-secondary"
            data-bs-toggle="tooltip"
-           title="Percentage of member’s loan requests that were approved by the group.">
+           title="How many of your loan requests got approved.">
         </i>
       </small>
-      <div class="progress mt-2" style="height:6px;"><div class="progress-bar" style="width:0%"></div></div>
+      <div class="progress mt-2" style="height:6px;">
+        <div class="progress-bar" style="width:0%"></div>
+      </div>
     </div>
   </div>
 
@@ -235,14 +253,18 @@
         Profit Share
         <i class="bi bi-info-circle ms-1 text-secondary"
            data-bs-toggle="tooltip"
-           title="Member’s contribution to total group profit (based on deposits).">
+           title="Your share of total deposits in this group. (Higher share = higher score)">
         </i>
       </small>
-      <div class="progress mt-2" style="height:6px;"><div class="progress-bar" style="width:0%"></div></div>
+      <div class="progress mt-2" style="height:6px;">
+        <div class="progress-bar" style="width:0%"></div>
+      </div>
     </div>
   </div>
 
 </div>
+
+
 
 <!-- Hedera Activity + Trend -->
 <div class="row g-4 mb-4">
@@ -342,6 +364,11 @@
         </div>
       </div>
     </div>
+    <div id="ctx"
+     data-user-id="{{ user_id }}"
+     data-group-id="{{ group_id }}"
+     data-group-slug="{{ group_slug }}"></div>
+
 
     <!-- Chart -->
     <div class="chart-box" style="height:280px; width:100%; position:relative;">
@@ -391,7 +418,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const lineCanvas = document.getElementById('trustLine');
   const lineWrapper = lineCanvas.parentElement;
   const paramCards = Array.from(document.querySelectorAll('#paramGrid .card'));
-  const refreshBtn = document.querySelector('.btn-top');
+  const refreshBtn = document.getElementById('btnRefresh');
+
 
   // Fixed semantic color map
   const NEGATIVE_METRICS = new Set([]);
@@ -402,38 +430,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ---------- Update param cards (fixed colors) ----------
 function updateParamCards(params) {
-  // Map each metric → bootstrap color class
   const COLOR_MAP = {
-    "Deposit Consistency": "bg-primary",          // Blue
-    "Repayment Timeliness": "bg-info",            // Light Blue
-    "On-time Repayments Ratio": "bg-success",     // Green
-    "Voting Participation": "bg-warning",         // Yellow
-    "Loan Request Frequency": "bg-success",       // Green
-    "Disbursal Timeliness": "bg-primary",         // Blue
-    "Self-Repayment Rate": "bg-success",          // Green
-    "Third-Party Payment Flag": "bg-secondary",   // Gray
-    "Loan Approval Rate": "bg-success",           // Green
-    "Profit Contribution Share": "bg-info"        // Light Blue
+    "Deposit Consistency": "bg-primary",
+    "Repayment Timeliness": "bg-info",
+    "On-time Repayments Ratio": "bg-success",
+    "Voting Participation": "bg-warning",
+    "Loan Request Frequency": "bg-success",
+    "Disbursal Timeliness": "bg-primary",
+    "Self-Repayment Rate": "bg-success",
+    "Third-Party Payment Flag": "bg-secondary",
+    "Loan Approval Rate": "bg-success",
+    "Profit Contribution Share": "bg-info"
   };
 
   paramCards.forEach(card => {
     const key = card.dataset.metric;
-    const val = params[key];
+    const raw = (params || {})[key];
     const valueEl = card.querySelector('h2');
     const pbar = card.querySelector('.progress-bar');
+    if (!valueEl || !pbar) return;
 
-    if (typeof val !== 'undefined' && valueEl && pbar) {
-      const pct = Math.max(0, Math.min(100, Math.round(Number(val) || 0)));
-      valueEl.innerText = `${pct}%`;
-      pbar.style.width = `${pct}%`;
+    // reset color
+    pbar.className = 'progress-bar';
+    const colorClass = COLOR_MAP[key] || "bg-success";
+    pbar.classList.add(colorClass);
 
-      // reset → then apply mapped color
-      pbar.className = 'progress-bar';
-      const colorClass = COLOR_MAP[key] || "bg-success";
-      pbar.classList.add(colorClass);
+    // handle N/A
+    if (raw === null || raw === undefined || Number.isNaN(Number(raw))) {
+      valueEl.innerText = 'N/A';
+      pbar.style.width = '0%';
+      return;
     }
+
+    const pct = Math.max(0, Math.min(100, Math.round(Number(raw) || 0)));
+    valueEl.innerText = `${pct}%`;
+    pbar.style.width = `${pct}%`;
   });
 }
+
 
   // ---------- Donut ----------
   function renderDonut(score) {
@@ -582,6 +616,8 @@ function updateParamCards(params) {
       const j = await resp.json();
       const trust = j.trust || { params:{}, overall:0 };
       const overall = Math.round(Number(trust.overall || 0));
+      window.LATEST_OVERALL = overall;
+
       // 🔹 Inject user name + id into top bar
       if (j.meta) {
         const topBarTitle = document.getElementById("topBarTitle");
@@ -614,41 +650,130 @@ function updateParamCards(params) {
 });
 </script>
 
+
 <!-- Trend script -->
 <script>
-  async function loadScoreTrend() {
+(function () {
+  // Chart instance ko global pe rakhte hain taaki recreate na karna pade
+  let chartInstance = null;
+
+  // Helper: date formatting (yyyy-mm-dd) — agar API alag format de toh adjust karo
+  function formatLabel(dateStr) {
     try {
-      const resp = await fetch(`/api/coops/{{ group_slug }}/trustscore/trend/{{ user_id }}`);
-      if (!resp.ok) return;
-      const data = await resp.json();
-      const ctx = document.getElementById("scoreTrend").getContext("2d");
-      new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: data.map(d => d.date),
-          datasets: [{
-            label: "Trust Score",
-            data: data.map(d => d.score),
-            borderColor: "#4285f4",
-            backgroundColor: "rgba(66,133,244,0.2)", // 🔹 light blue fill
-            tension: 0.3,
-            fill: true,
-            pointRadius: 4,
-            pointBackgroundColor: "#4285f4",
-            pointBorderColor: "#fff",
-            pointBorderWidth: 2
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,   // 🔹 wrapper height follow करेगा
-          scales: { y: { min: 0, max: 100 } },
-          plugins: { legend: { display: false } }
-        }
-      });
-    } catch (e) { console.error("Trend load failed", e); }
+      const d = new Date(dateStr);
+      if (isNaN(d)) return dateStr;
+      return d.toLocaleDateString(); // browser locale ke hisaab se readable
+    } catch (e) {
+      return dateStr;
+    }
   }
+
+  async function loadScoreTrend() {
+    const groupSlug = "{{ group_slug }}"; // server-side templating
+    const userId = "{{ user_id }}";       // server-side templating
+    if (!groupSlug || !userId) {
+      console.warn("Missing group_slug or user_id for trustscore trend.");
+      return;
+    }
+
+    const url = `/api/coops/${encodeURIComponent(groupSlug)}/trustscore/trend/${encodeURIComponent(userId)}`;
+
+    try {
+      const resp = await fetch(url, { cache: "no-store" });
+      if (!resp.ok) {
+        console.error("Failed to fetch trend:", resp.status, resp.statusText);
+        return;
+      }
+
+      const data = await resp.json();
+      if (!Array.isArray(data) || data.length === 0) {
+        // show placeholder / clear chart
+        if (chartInstance) {
+          chartInstance.data.labels = [];
+          chartInstance.data.datasets[0].data = [];
+          chartInstance.update();
+        }
+        console.info("No trend data available.");
+        return;
+      }
+
+      const labels = data.map(d => formatLabel(d.date ?? d.label ?? ""));
+      const scores = data.map(d => {
+        const s = Number(d.score);
+        return Number.isFinite(s) ? s : null;
+      });
+
+      // ensure canvas exists
+      const canvas = document.getElementById("scoreTrend");
+      if (!canvas) {
+        console.error("#scoreTrend canvas not found in DOM.");
+        return;
+      }
+      const ctx = canvas.getContext("2d");
+
+      // If chart already exists, update it; else create new
+      if (chartInstance) {
+        chartInstance.data.labels = labels;
+        chartInstance.data.datasets[0].data = scores;
+        chartInstance.update();
+      } else {
+        // eslint-disable-next-line no-undef
+        chartInstance = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [{
+              label: "Trust Score",
+              data: scores,
+              borderColor: "#4285f4",
+              backgroundColor: "rgba(66,133,244,0.15)",
+              tension: 0.3,
+              fill: true,
+              pointRadius: 4,
+              pointBackgroundColor: "#4285f4",
+              pointBorderColor: "#fff",
+              pointBorderWidth: 2,
+              spanGaps: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                suggestedMin: 0,
+                suggestedMax: 100,
+                beginAtZero: true,
+                ticks: { stepSize: 10 }
+              }
+            },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const v = context.parsed.y;
+                    return (v === null || v === undefined) ? "No value" : `Trust Score: ${v.toFixed(2)}`;
+                  }
+                }
+              }
+            }
+          }
+        });
+
+        // expose for debugging if needed
+        window.scoreTrendChart = chartInstance;
+      }
+    } catch (err) {
+      console.error("Trend load failed:", err);
+    }
+  }
+
+  // Load on DOM ready
   document.addEventListener("DOMContentLoaded", loadScoreTrend);
+  // Optional: expose reload function (useful for manual refresh)
+  window.reloadTrustScoreTrend = loadScoreTrend;
+})();
 </script>
 
 <script>
@@ -729,17 +854,29 @@ async function loadComponentBreakdown(){
   if(!resp.ok) return;
   const j = await resp.json();
   const params = j.trust?.params || {};
-  const labels = Object.keys(params);
-  const values = labels.map(k => Math.max(0, Math.min(100, Math.round(Number(params[k] || 0)))));
+
+  // keep only numeric metrics (skip null/undefined)
+  const entries = Object.entries(params)
+    .filter(([_, v]) => typeof v === 'number' && !Number.isNaN(v))
+    .map(([k, v]) => [k, Math.max(0, Math.min(100, Math.round(v)))]);
+
+  const labels = entries.map(([k]) => k);
+  const values = entries.map(([_, v]) => v);
 
   const ctx = document.getElementById("componentBreakdown").getContext("2d");
   new Chart(ctx,{
     type:"pie",
-    data:{ labels, datasets:[{ data:values, backgroundColor:["#4caf50","#ff9800","#2196f3","#9c27b0","#f44336","#00bcd4","#8bc34a","#ffc107","#3f51b5","#e91e63"] }]},
+    data:{
+      labels,
+      datasets:[{
+        data: values,
+        backgroundColor:["#4caf50","#ff9800","#2196f3","#9c27b0","#f44336","#00bcd4","#8bc34a","#ffc107","#3f51b5","#e91e63"]
+      }]
+    },
     options:{
       responsive:true,
-      maintainAspectRatio:false,              // <-- important
-      layout:{ padding:{ right:20 } },        // extra breathing room
+      maintainAspectRatio:false,
+      layout:{ padding:{ right:20 } },
       plugins:{ legend:{ position:"right", labels:{ boxWidth:18, padding:14, usePointStyle:true, font:{size:12} } } }
     }
   });

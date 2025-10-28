@@ -57,9 +57,69 @@
     .table tbody td:first-child{ border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
     .table tbody td:last-child{ border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
     .table tbody tr:hover td{ background: #cddbe6; }
-
+  
     @media (max-width: 991.98px){ .coop-app{ grid-template-columns: 1fr; column-gap:0; } .coop-sidebar{ display:none; } .coop-main{ padding:12px; } .coop-main-inner{ padding: 0; } .content-align-spacer{ height: 0; } }
   </style>
+  <style>/* ---------- Custom Badge Colors ---------- */
+.badge.bg-success {
+  background-color: #2A8C88 !important;  /* approved */
+  color: #fff !important;
+}
+
+.badge.bg-danger {
+  background-color: #EBB979 !important;  /* rejected */
+  color: #000 !important;
+}
+
+.badge.bg-warning {
+  background-color: #F4C542 !important;  /* pending */
+  color: #000 !important;
+}
+
+/* ---------- Button Custom Colors ---------- */
+.btn-success {
+  background-color: #2A8C88 !important;
+  border-color: #2A8C88 !important;
+  color: #fff !important;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-success:hover {
+  background-color: #257873 !important;
+  transform: scale(1.05);
+}
+
+.btn-danger {
+  background-color: #EBB979 !important;
+  border-color: #EBB979 !important;
+  color: #000 !important;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-danger:hover {
+  background-color: #d8a661 !important;
+  transform: scale(1.05);
+}
+
+/* ---------- Row Highlight Based on Status ---------- */
+tr td .badge.bg-success {
+  box-shadow: 0 0 5px rgba(42, 140, 136, 0.4);
+}
+tr td .badge.bg-danger {
+  box-shadow: 0 0 5px rgba(235, 185, 121, 0.5);
+}
+tr td .badge.bg-warning {
+  box-shadow: 0 0 5px rgba(244, 197, 66, 0.4);
+}
+
+/* Optional: alternate row subtle color */
+table tbody tr:nth-child(even) {
+  background-color: #f9fbfb;
+}
+table tbody tr:nth-child(odd) {
+  background-color: #eef3f3;
+}
+</style>
 </head>
 <body>
   <header class="topbar py-2">
@@ -176,7 +236,7 @@
             <div class="mb-2 d-flex align-items-center">
               <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" id="kycAutoToggle" onchange="toggleKYCMode()">
-                <label class="form-check-label" for="kycAutoToggle">Auto-Approve Mode</label>
+                <label class="form-check-label" for="kycAutoToggle">KYC Approval Mode</label>
               </div>
               <span id="kycModeStatus" class="ms-2 text-muted">[Manual]</span>
             </div>
@@ -364,7 +424,7 @@ async function toggleKYCMode() {
 
         if (!res.ok) {
             // toggle failed on server — revert checkbox visually and show error
-            await loadKYCMode(); // restore UI from server
+            loadKYCMode(); // restore UI from server
             statusEl.textContent = "[Error]";
             return;
         }
@@ -375,11 +435,11 @@ async function toggleKYCMode() {
         toggleEl.checked = (mode === "auto");
 
         // refresh KYC table so approved/pending reflect immediately
-        await loadKYC();
+        loadKYC();
     } catch (e) {
         statusEl.textContent = "[Network error]";
         // restore checkbox state from server
-        await loadKYCMode();
+        loadKYCMode();
     }
 }
 

@@ -73,11 +73,21 @@
     </div>
   </div>
 
-  <div class="card shadow-sm mb-3">
-    <div class="card-header fw-bold">💳 Purchase BHC (Pay via M-Pesa)</div>
-    <div class="card-body">
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
 
-      <!-- Create Order row -->
+    <!-- Toggle text links -->
+    <div class="d-flex justify-content-around mb-3">
+      <span id="btn-purchase" class="fw-semibold text-primary border-bottom border-primary pb-1" style="cursor:pointer;">
+        💰 Purchase
+      </span>
+      <span id="btn-sell" class="fw-semibold text-muted pb-1" style="cursor:pointer;">
+        💸 Sell / Withdraw
+      </span>
+    </div>
+
+    <!-- ✅ PURCHASE FORM -->
+    <div id="purchase-section">
       <div class="mb-3">
         <label class="form-label">Create Order (quick)</label>
         <div class="input-group">
@@ -100,7 +110,7 @@
         </div>
 
         <div class="mb-3">
-        <label class="form-label">Amount (KES) (⚖️ 1 KES = 1 BHC)</label>
+          <label class="form-label">Amount (KES) (⚖️ 1 KES = 1 BHC)</label>
           <input type="number" step="0.01" class="form-control" id="payment-amount" placeholder="100" required>
         </div>
 
@@ -110,15 +120,33 @@
           <div class="form-text">(Sandbox: you may keep <code>NLJ7RT61SV</code> for testing)</div>
         </div>
 
-        <!-- Order ID hidden -->
         <input type="hidden" id="order-id" value="">
-
         <button type="submit" class="btn btn-primary w-100">✅ Confirm Payment</button>
       </form>
-
-      <div id="payment-result" class="mt-3"></div>
     </div>
+
+    <!-- ✅ SELL / WITHDRAW FORM (hidden by default) -->
+    <form id="sell-form" style="display:none; margin-top:10px;">
+      <div class="mb-3">
+        <label class="form-label">Your M-Pesa Number</label>
+        <input type="text" class="form-control" id="sell-msisdn" placeholder="Enter M-Pesa number e.g. 254700000001">
+        <div class="form-text">
+          You can edit this manually or <a href="#" id="use-my-number">Use my saved number</a>.
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Amount (BHC)</label>
+        <input type="number" step="0.01" class="form-control" id="sell-bhc-amount" placeholder="e.g. 100" required>
+        <div class="form-text">Rate: <span id="sell-rate-text">loading...</span> (BHC → KES)</div>
+      </div>
+
+      <button id="sell-now-btn" type="button" class="btn btn-warning w-100">💸 Sell BHC / Withdraw</button>
+    </form>
+
+    <div id="payment-result" class="mt-3"></div>
   </div>
+</div>
 
 </div>
 <!-- 📌 Left Sidebar END -->
@@ -590,6 +618,227 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const backendURL = "http://127.0.0.1:5000";
+  const token = localStorage.getItem("jwt_token");
+
+  // Elements (purchase)
+  const createBtn = document.getElementById("create-order-btn");
+  const orderIdField = document.getElementById("order-id");
+  const agencyField = document.getElementById("agency-number");
+  const paymentForm = document.getElementById("payment-form");
+  const createMsg = document.getElementById("create-order-msg");
+  const paymentResult = document.getElementById("payment-result");
+
+  // Elements (sell)
+  const sellNowBtn = document.getElementById("sell-now-btn");
+  const sellBhcInput = document.getElementById("sell-bhc-amount");
+  const sellMsisdnInput = document.getElementById("sell-msisdn");
+  const sellRateText = document.getElementById("sell-rate-text");
+
+  // Toggle elements
+  const btnPurchase = document.getElementById("btn-purchase");
+  const btnSell = document.getElementById("btn-sell");
+  const purchaseSection = document.getElementById("purchase-section");
+  const sellForm = document.getElementById("sell-form");
+
+  // user
+  window.currentUser = null;
+  window.loggedInUserId = window.loggedInUserId || null;
+
+  // --- UI toggle helpers ---
+  function activatePurchase() {
+    btnPurchase.classList.remove("text-muted");
+    btnPurchase.classList.add("text-primary", "border-bottom", "border-primary");
+    btnSell.classList.remove("text-primary", "border-bottom", "border-primary");
+    btnSell.classList.add("text-muted");
+    purchaseSection.style.display = "";
+    sellForm.style.display = "none";
+    paymentResult.innerHTML = "";
+  }
+  function activateSell() {
+    btnSell.classList.remove("text-muted");
+    btnSell.classList.add("text-primary", "border-bottom", "border-primary");
+    btnPurchase.classList.remove("text-primary", "border-bottom", "border-primary");
+    btnPurchase.classList.add("text-muted");
+    purchaseSection.style.display = "none";
+    sellForm.style.display = "";
+    paymentResult.innerHTML = "";
+    fillSellMsisdnFromProfile();
+    loadSellRate();
+  }
+  btnPurchase.addEventListener("click", (e) => { e.preventDefault(); activatePurchase(); });
+  btnSell.addEventListener("click", (e) => { e.preventDefault(); activateSell(); });
+
+  // --- Load current user (and populate sidebar/user inputs) ---
+  async function loadCurrentUser() {
+    if (!token) return;
+    try {
+      const res = await fetch(`${backendURL}/api/users/me`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (!res.ok) return;
+      const user = await res.json();
+      window.currentUser = user;
+      window.loggedInUserId = user.id;
+
+      // populate sidebar hedera id already handled elsewhere; populate msisdn fields if available
+      const foundMsisdn = user.msisdn || user.phone || user.mobile || user.phone_number || user.mpesa || null;
+      if (foundMsisdn) {
+        const userMsisdnInput = document.getElementById("user-msisdn");
+        if (userMsisdnInput) userMsisdnInput.value = foundMsisdn;
+        if (sellMsisdnInput) sellMsisdnInput.value = foundMsisdn;
+      }
+    } catch (err) {
+      console.warn("Could not load user", err);
+    }
+  }
+
+  function fillSellMsisdnFromProfile() {
+    const userMsisdnInput = document.getElementById("user-msisdn");
+    if (window.currentUser && (window.currentUser.msisdn || window.currentUser.phone || window.currentUser.mobile)) {
+      sellMsisdnInput.value = window.currentUser.msisdn || window.currentUser.phone || window.currentUser.mobile;
+    } else if (userMsisdnInput && userMsisdnInput.value) {
+      sellMsisdnInput.value = userMsisdnInput.value;
+    }
+  }
+
+  // --- Rate loader (simple) ---
+  let cachedRate = null;
+  async function loadSellRate() {
+    if (cachedRate !== null) {
+      sellRateText.textContent = `${cachedRate} KES per BHC`;
+      return;
+    }
+    try {
+      const res = await fetch(`${backendURL}/api/payments/rate`);
+      if (res.ok) {
+        const d = await res.json();
+        cachedRate = d.rate || d.bhc_to_kes || Number(d) || 1.0;
+      } else {
+        cachedRate = Number((new URLSearchParams(window.location.search)).get("rate")) || 1.0;
+      }
+    } catch (err) {
+      cachedRate = 1.0;
+    }
+    sellRateText.textContent = `${cachedRate} KES per BHC`;
+  }
+
+  // --- Create Order handler ---
+  createBtn.addEventListener("click", async (ev) => {
+    ev.preventDefault();
+    if (!token) { alert("Please login first."); return; }
+    const msisdn = document.getElementById("create-msisdn").value.trim();
+    const amount = document.getElementById("create-amount").value.trim();
+    if (!msisdn || !amount) {
+      createMsg.textContent = "❌ msisdn and amount required";
+      return;
+    }
+    createBtn.disabled = true;
+    createBtn.textContent = "Creating...";
+    try {
+      const res = await fetch(`${backendURL}/api/payments/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ user_id: window.loggedInUserId, msisdn, amount })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "create failed");
+      orderIdField.value = data.order_id;
+      agencyField.value = data.agency_number;
+      createMsg.textContent = `✅ Order created: ${data.order_id}`;
+      createBtn.textContent = "Order Created";
+    } catch (err) {
+      createMsg.textContent = "❌ " + err.message;
+      createBtn.disabled = false;
+      createBtn.textContent = "Create Order";
+    }
+  });
+
+  // --- Confirm Payment handler (purchase) ---
+  paymentForm.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    if (!token) { alert("Please login first."); return; }
+    const payload = {
+      order_id: orderIdField.value.trim(),
+      msisdn: document.getElementById("user-msisdn").value.trim(),
+      amount: document.getElementById("payment-amount").value.trim(),
+      mpesa_ref: document.getElementById("mpesa-ref").value.trim(),
+      agency_number: agencyField.value.trim()
+    };
+    try {
+      const res = await fetch(`${backendURL}/api/payments/confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      paymentResult.innerHTML = res.ok
+        ? `<div class="alert alert-success">✅ ${data.message}<br><small>Tx: ${data.hedera_tx_id || "-"}</small></div>`
+        : `<div class="alert alert-danger">❌ ${data.error || "failed"}<br><small>${JSON.stringify(data.details||"")}</small></div>`;
+    } catch (err) {
+      paymentResult.innerHTML = `<div class="alert alert-danger">❌ Network error: ${err.message}</div>`;
+    }
+  });
+
+  // --- Sell handler ---
+  sellNowBtn.addEventListener("click", async (ev) => {
+    ev.preventDefault();
+    if (!token) { alert("Please login first."); return; }
+    const bhc = (sellBhcInput.value || "").trim();
+    const msisdn = (sellMsisdnInput.value || "").trim();
+    if (!bhc || Number(bhc) <= 0) { alert("Enter valid BHC amount"); return; }
+    if (!msisdn) { alert("No M-Pesa number found. Please add your number."); return; }
+
+    sellNowBtn.disabled = true;
+    const prevText = sellNowBtn.textContent;
+    sellNowBtn.textContent = "Processing...";
+
+    try {
+      const payload = { user_id: window.loggedInUserId, bhc_amount: bhc };
+      const res = await fetch(`${backendURL}/api/payments/sell`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        paymentResult.innerHTML = `<div class="alert alert-success">✅ ${bhc} BHC sold. KES ${data.kes_value || data.amount || ''} will be credited to ${msisdn} soon.<br><small>Order: ${data.order_id}</small></div>`;
+        // optional: clear input
+        sellBhcInput.value = "";
+      } else {
+        paymentResult.innerHTML = `<div class="alert alert-danger">❌ ${data.error || 'Sell failed'} <br><small>${JSON.stringify(data.details||'')}</small></div>`;
+      }
+    } catch (err) {
+      paymentResult.innerHTML = `<div class="alert alert-danger">❌ Network error: ${err.message}</div>`;
+    } finally {
+      sellNowBtn.disabled = false;
+      sellNowBtn.textContent = prevText;
+    }
+  });
+
+  // --- small helper: click "Use my number" if exists (if you added such link) ---
+  const useMyNumber = document.getElementById("use-my-number");
+  if (useMyNumber) {
+    useMyNumber.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      const profileNum = window.currentUser && (window.currentUser.msisdn || window.currentUser.phone || window.currentUser.mobile);
+      const sidebarNum = document.getElementById("user-msisdn") ? document.getElementById("user-msisdn").value.trim() : "";
+      const target = document.getElementById("sell-msisdn");
+      if (profileNum) target.value = profileNum;
+      else if (sidebarNum) target.value = sidebarNum;
+      target.focus();
+    });
+  }
+
+  // init
+  loadCurrentUser().then(() => {
+    // default UI
+    activatePurchase();
+  });
+});
+</script>
 
 
 </body>

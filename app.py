@@ -1,3 +1,5 @@
+import os
+import sys
 from flask import Flask, jsonify, render_template
 from flask_cors import CORS
 from config import Config
@@ -52,6 +54,40 @@ def create_app():
     app.register_blueprint(coop_bp)
     app.register_blueprint(payments_bp)
 
+    from apscheduler.schedulers.background import BackgroundScheduler
+    from middleware.offline_sync import process_outbox
+
+        # ✅ Background scheduler (safe, app context)
+    def _process_outbox_with_app():
+        with app.app_context():
+            try:
+                process_outbox()
+            except Exception:
+                import traceback
+                traceback.print_exc()
+
+    def start_scheduler():
+        
+        # ⚠️ Prevent running during CLI commands (db migrate, shell, etc.)
+        if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+            return
+
+        scheduler = BackgroundScheduler()
+        scheduler.add_job(
+            _process_outbox_with_app,
+            'interval',
+            minutes=1,
+            id='outbox_retry',
+            max_instances=1,
+            coalesce=True,
+            replace_existing=True,
+            misfire_grace_time=60
+        )
+        scheduler.start()
+        print("✅ Outbox background scheduler started (runs every 1 min)")
+
+    start_scheduler()
+
 
     # Root route -> login page
     @app.route('/')
@@ -71,6 +107,7 @@ def create_app():
             return jsonify({"error": "Forbidden: Super Admins only"}), 403
 
         return render_template("super_admin.html")
+    
 
     # ✅ Secure Admin Dashboard (role check)
     @app.route("/bank-admin")
