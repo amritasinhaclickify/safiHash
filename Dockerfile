@@ -7,12 +7,9 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential openjdk-17-jdk git curl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-   
-
-    rm -rf /var/lib/apt/lists/*
-
 # set workdir
 WORKDIR /app
+
 
 # copy requirements first for layer caching
 COPY requirements.txt /app/requirements.txt
