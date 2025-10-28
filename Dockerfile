@@ -30,5 +30,6 @@ EXPOSE 10000
 ENV PORT 10000
 
 # start command
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:10000", "app:create_app()"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:10000", "app:app"]
+
 
