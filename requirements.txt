@@ -9,6 +9,7 @@ APScheduler==3.11.0
 gunicorn==23.0.0
 requests==2.32.3
 pyjnius==1.6.1
+python-dateutil==2.9.0
 
 
 hedera-sdk-py==2.50.0
