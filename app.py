@@ -1,5 +1,7 @@
 import os
 import sys
+import threading           # CHANGED: imported for background Hedera init
+import importlib          # CHANGED: dynamic import to avoid import-time blocking
 from flask import Flask, jsonify, render_template
 from flask_cors import CORS
 from config import Config
@@ -199,6 +201,29 @@ def create_app():
     @app.errorhandler(500)
     def internal_error(error):
         return jsonify({"error": "Internal server error"}), 500
+
+    # ✅ Background Hedera init (non-blocking, safe for Render)
+    def _init_hedera_in_background():
+        try:
+            hedera_cfg = importlib.import_module("hedera.config")
+            if hasattr(hedera_cfg, "init_hedera_client"):
+                hedera_cfg.init_hedera_client(Config)
+                print("✅ Hedera client initialized in background")
+            else:
+                print("⚠️ hedera.config has no init_hedera_client()")
+        except Exception as e:
+            print("⚠️ Hedera background init failed:", e)
+
+    # ✅ Only start Hedera if ENABLE_HEDERA=true (default true)
+    if os.environ.get("ENABLE_HEDERA", "true").lower() in ("1", "true", "yes"):
+        threading.Thread(target=_init_hedera_in_background, daemon=True).start()
+    else:
+        print("ℹ️ Hedera init skipped (ENABLE_HEDERA not enabled)")
+
+    # ✅ Health check for Render
+    @app.route("/healthz")
+    def healthz():
+        return "ok", 200
 
     return app
 
