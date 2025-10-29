@@ -1,37 +1,33 @@
 # Use a stable Debian base where OpenJDK 17 is available
 FROM python:3.11-slim-bullseye
 
-# install system deps and OpenJDK (for pyjnius)
+# Install system dependencies and OpenJDK (needed for pyjnius / Hedera SDK)
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential openjdk-17-jdk git curl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-# set workdir
+# Set working directory
 WORKDIR /app
 
-
-# copy requirements first for layer caching
+# Copy requirements first (for Docker layer caching)
 COPY requirements.txt /app/requirements.txt
 
-# upgrade pip and install python deps (will build pyjnius here)
+# Upgrade pip and install Python dependencies
 RUN python -m pip install --upgrade pip setuptools wheel && \
     pip install -r requirements.txt
 
-# copy rest of the app
+# Copy the rest of the app code
 COPY . /app
 
-# make sure any scripts are executable
+# Make shell scripts executable (if any)
 RUN chmod +x ./*.sh || true
 
-# expose port
+# Expose (optional) — Render auto-detects the actual runtime port
 EXPOSE 10000
-# Render sets PORT env; gunicorn default bind should use $PORT
-ENV PORT 10000
 
-# start command
+# ⚠️ Do NOT hardcode PORT here; Render assigns it dynamically
+# ENV PORT 10000  ← REMOVE THIS LINE COMPLETELY ❌
+
+# ✅ Start Gunicorn using Render-provided $PORT dynamically
 CMD gunicorn -w 4 -b 0.0.0.0:$PORT app:app
-
-
-
-
