@@ -220,11 +220,18 @@ def create_app():
     else:
         print("ℹ️ Hedera init skipped (ENABLE_HEDERA not enabled)")
 
-    # ✅ Health check for Render
+    # ✅ Health check for Render (always responds instantly)
     @app.route("/healthz")
     def healthz():
         return "ok", 200
 
+    # ✅ Quick root test route
+    @app.route("/ping")
+    def ping():
+        return jsonify({"status": "alive"}), 200
+
+    print("✅ Flask app created successfully and listening on port",
+          os.environ.get("PORT", 10000))
     return app
 
 
