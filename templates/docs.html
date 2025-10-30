@@ -16,6 +16,16 @@
     .warn { color:#b45309; font-weight:600; }
     .ok { color:#065f46; font-weight:600; }
   </style>
+  <style>
+.copybtn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.copybtn:hover { color: green; }
+.code div { margin-bottom: 4px; }
+</style>
 </head>
 <body>
   <div class="container">
@@ -260,18 +270,18 @@
         All supported commands are listed in the 📖 <strong>Chat Commands Guidelines</strong> section for easy reference.
       </p>
 
-      <pre class="code">
-testuser01@example.com    / testuser01
-testuser02@example.com    / testuser02
-testuser03@example.com    / testuser03
-testuser04@example.com    / testuser04
-testuser05@example.com    / testuser05
-testuser06@example.com    / testuser06
-testuser07@example.com    / testuser07
-testuser08@example.com    / testuser08
-testuser09@example.com    / testuser09
-testuser10@example.com    / testuser10
-      </pre>
+<div class="code" id="userList" style="font-family: monospace;">
+  <div>testuser01@example.com <button class="copybtn" data-copy="testuser01@example.com">📋</button> / testuser01 <button class="copybtn" data-copy="testuser01">📋</button></div>
+  <div>testuser02@example.com <button class="copybtn" data-copy="testuser02@example.com">📋</button> / testuser02 <button class="copybtn" data-copy="testuser02">📋</button></div>
+  <div>testuser03@example.com <button class="copybtn" data-copy="testuser03@example.com">📋</button> / testuser03 <button class="copybtn" data-copy="testuser03">📋</button></div>
+  <div>testuser04@example.com <button class="copybtn" data-copy="testuser04@example.com">📋</button> / testuser04 <button class="copybtn" data-copy="testuser04">📋</button></div>
+  <div>testuser05@example.com <button class="copybtn" data-copy="testuser05@example.com">📋</button> / testuser05 <button class="copybtn" data-copy="testuser05">📋</button></div>
+  <div>testuser06@example.com <button class="copybtn" data-copy="testuser06@example.com">📋</button> / testuser06 <button class="copybtn" data-copy="testuser06">📋</button></div>
+  <div>testuser07@example.com <button class="copybtn" data-copy="testuser07@example.com">📋</button> / testuser07 <button class="copybtn" data-copy="testuser07">📋</button></div>
+  <div>testuser08@example.com <button class="copybtn" data-copy="testuser08@example.com">📋</button> / testuser08 <button class="copybtn" data-copy="testuser08">📋</button></div>
+  <div>testuser09@example.com <button class="copybtn" data-copy="testuser09@example.com">📋</button> / testuser09 <button class="copybtn" data-copy="testuser09">📋</button></div>
+  <div>testuser10@example.com <button class="copybtn" data-copy="testuser10@example.com">📋</button> / testuser10 <button class="copybtn" data-copy="testuser10">📋</button></div>
+</div>
 
       <p class="warn">
         Note: These 10 accounts are provided to judges with KYC already set to <code>verified</code> for testing. 
@@ -520,6 +530,19 @@ document.addEventListener('DOMContentLoaded', function() {
     if (e.key === 'ArrowLeft') carousel.prev();
     if (e.key === 'ArrowRight') carousel.next();
   });
+});
+</script>
+<script>
+document.addEventListener('click', async e => {
+  if (!e.target.classList.contains('copybtn')) return;
+  const text = e.target.dataset.copy;
+  try {
+    await navigator.clipboard.writeText(text);
+    e.target.textContent = '✅';
+    setTimeout(() => (e.target.textContent = '📋'), 1000);
+  } catch {
+    alert('Copy failed');
+  }
 });
 </script>
 
