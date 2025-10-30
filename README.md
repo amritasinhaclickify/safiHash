@@ -73,6 +73,12 @@ safihash/
 
 ---
 
+---
+
+⚠️ **Note:** Modules like `company`, `ngo`, and `user_dashboard` exist for future expansion and are **not active** in this demo version.
+
+---
+
 ## 🔐 Environment Variables
 
 Below are the keys required for Render or local `.env` setup
@@ -92,6 +98,33 @@ Below are the keys required for Render or local `.env` setup
 | PRODUCTION | `false` → testnet mode |
 
 🧩 All environment variables are already configured in **Render**.
+
+---
+
+## 🧰 Setup & Run (Locally)
+
+```bash
+# 1️⃣ Clone the repository
+git clone https://github.com/amritasinhaclickify/safiHash.git
+cd safihash
+
+# 2️⃣ Create a virtual environment
+python -m venv venv
+venv\Scripts\activate   # Windows
+# or
+source venv/bin/activate  # Mac/Linux
+
+# 3️⃣ Install dependencies
+pip install -r requirements.txt
+
+# 4️⃣ Create a .env file
+# (copy from .env.example and add your Hedera/M-Pesa test keys)
+
+# 5️⃣ Run the app
+flask run
+# or
+python app.py
+
 
 ---
 
