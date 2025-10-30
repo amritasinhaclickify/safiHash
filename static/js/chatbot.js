@@ -300,76 +300,62 @@ if (file) {
   // ---------------- Simple appendMessage exposure for older code ----------------
   // Keep a globally available appendMessage for other inline scripts that expect it.
   window.appendMessage = appendMessage;
-// ---- improved: intercept group links and load in-chat (SPA style) ----
-document.addEventListener('click', async function (e) {
-  try {
-    // ignore middle-click / ctrl/cmd / shift so user can open in new tab intentionally
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+// TEMP TEST: capture-phase interceptor (paste in Console)
+(function(){
+  function handle(e){
+    try{
+      // ignore modifier keys (user intentionally opening new tab/window)
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+      const a = e.target.closest && e.target.closest('a');
+      if (!a) return;
+      // match anchors that look like group links by href pattern or data-slug
+      const href = (a.getAttribute('href')||'').toLowerCase();
+      if (!(a.classList.contains('group-link') || a.dataset.slug || href.includes('/coops/'))) return;
+      console.log('INTERCEPT (capture) fired for', a.textContent.trim(), a.href);
 
-    // find anchor either by class or by data-slug attribute
-    const a = e.target.closest && e.target.closest('a.group-link, a[data-slug]');
-    if (!a) return;
+      // prevent navigation no matter what
+      e.preventDefault();
+      e.stopImmediatePropagation && e.stopImmediatePropagation();
+      e.stopPropagation && e.stopPropagation();
 
-    // debug: log that handler fired
-    console.log('DEBUG: group-link clicked ->', a.textContent.trim(), 'href=', a.getAttribute('href'), 'data-slug=', a.dataset.slug);
+      // also remove target to avoid new-tab behavior
+      if (a.target) a.__saved_target = a.target, a.removeAttribute('target');
 
-    // prevent normal navigation and stop other handlers
-    e.preventDefault();
-    e.stopImmediatePropagation && e.stopImmediatePropagation();
+      // call app loader if available
+      const slug = a.dataset.slug || href.split('/').filter(Boolean).pop();
+      if (!slug) { console.warn('no slug found'); return; }
+      // show minimal in-chat feedback
+      const chat = document.querySelector('#chat-box');
+      if (chat && !document.getElementById('group-loading-temp')) {
+        const d = document.createElement('div'); d.id='group-loading-temp'; d.className='chat-message bot'; d.innerText = '...loading group '+slug;
+        chat.appendChild(d);
+      }
+      // try to call existing loaders
+      (async ()=>{
+        const token = localStorage.getItem('jwt_token');
+        if (!token) { console.warn('no jwt'); return; }
+        try {
+          const res = await fetch((window.backendURL||'') + '/api/coops/'+slug, { headers: { Authorization: 'Bearer '+token }});
+          if (!res.ok) { console.warn('fetch failed', res.status); return; }
+          const group = await res.json();
+          console.log('GROUP LOADED (capture test):', group);
+          if (typeof loadGroup === 'function') loadGroup(slug, group);
+          else if (typeof openGroupInChat === 'function') openGroupInChat(group);
+          else {
+            const hdr = document.getElementById('chat-header-title') || document.querySelector('.card-header');
+            if (hdr) hdr.textContent = group.name || slug;
+          }
+        } catch(err){ console.error(err); }
+        // cleanup loading msg
+        const ld = document.getElementById('group-loading-temp'); if (ld) ld.remove();
+      })();
 
-    // determine slug
-    const slug = a.dataset.slug || (a.getAttribute('href') || '').split('/').filter(Boolean).pop();
-    if (!slug) {
-      appendMessage('bot', 'Group link invalid.');
-      return;
-    }
-
-    // show a single loading indicator (avoid spamming chat)
-    const existingLoading = document.getElementById('group-loading');
-    if (!existingLoading) {
-      const d = document.createElement('div'); d.id = 'group-loading'; d.className='chat-message bot'; d.innerText = `...loading group ${slug}`;
-      document.querySelector('#chat-box')?.appendChild(d);
-    } else {
-      existingLoading.innerText = `...loading group ${slug}`;
-    }
-
-    const token = localStorage.getItem('jwt_token');
-    if (!token) {
-      appendMessage('bot', 'Not authenticated — please login.');
-      return;
-    }
-
-    const res = await fetch((backendURL || '') + `/api/coops/${slug}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-
-    // remove loading indicator
-    const ld = document.getElementById('group-loading'); if (ld) ld.remove();
-
-    if (!res.ok) {
-      const txt = await res.text().catch(() => '');
-      console.warn('Group fetch failed', res.status, txt);
-      appendMessage('bot', `Failed to load group (${res.status}).`);
-      return;
-    }
-
-    const group = await res.json();
-    console.log('DEBUG: group loaded ->', group);
-
-    if (typeof loadGroup === 'function') {
-      loadGroup(slug, group);
-    } else if (typeof openGroupInChat === 'function') {
-      openGroupInChat(group);
-    } else {
-      const hdr = document.getElementById('chat-header-title') || document.querySelector('.card-header');
-      if (hdr) hdr.textContent = group.name || slug;
-      appendMessage('bot', `Loaded group: ${group.name || slug}`);
-    }
-  } catch (err) {
-    console.error('Error in group-link handler', err);
-    appendMessage('bot', 'Error loading group — check console.');
+    }catch(err){ console.error(err); }
   }
-});
+  // add in capture phase to run before other handlers
+  window.addEventListener('click', handle, true);
+  console.log('Capture-phase group interceptor installed (temporary).');
+})();
 
 
 
