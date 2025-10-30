@@ -631,7 +631,7 @@ async function loadDeposits() {
 <!-- 5. Loans -->
 <script>
 async function loadLoans() {
-    const res = await authFetch(`/api/coops/${SLUG}/loans`);
+    const res = await authFetch(`/api/coops/${SLUG}/loans/with-repayments`);
     if (!res) return;
     const rows = await res.json();
     const body = document.getElementById("loansBody");
@@ -641,17 +641,18 @@ async function loadLoans() {
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td>${l.user_id}</td>
-            <td>${l.amount}</td>
-            <td>${l.status}</td>
+            <td>${l.principal}</td>
+            <td>${l.outstanding > 0 ? "active" : "closed"}</td>
             <td>${fmtDate(l.created_at)}</td>
         `;
         body.appendChild(tr);
     });
 
     document.getElementById("sumLoans").textContent =
-        rows.filter(r => ["approved","disbursed","active"].includes(r.status) && r.status !== "closed").length;
+        rows.filter(r => l.outstanding > 0).length;
 }
 </script>
+
 
 <!-- 6. Votes -->
 <script>
