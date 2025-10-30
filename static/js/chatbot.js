@@ -300,65 +300,6 @@ if (file) {
   // ---------------- Simple appendMessage exposure for older code ----------------
   // Keep a globally available appendMessage for other inline scripts that expect it.
   window.appendMessage = appendMessage;
-// TEMP TEST: capture-phase interceptor (paste in Console)
-(function(){
-  function handle(e){
-    try{
-      // ignore modifier keys (user intentionally opening new tab/window)
-      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
-      const a = e.target.closest && e.target.closest('a');
-      if (!a) return;
-      // match anchors that look like group links by href pattern or data-slug
-      const href = (a.getAttribute('href')||'').toLowerCase();
-      if (!(a.classList.contains('group-link') || a.dataset.slug || href.includes('/coops/'))) return;
-      console.log('INTERCEPT (capture) fired for', a.textContent.trim(), a.href);
-
-      // prevent navigation no matter what
-      e.preventDefault();
-      e.stopImmediatePropagation && e.stopImmediatePropagation();
-      e.stopPropagation && e.stopPropagation();
-
-      // also remove target to avoid new-tab behavior
-      if (a.target) a.__saved_target = a.target, a.removeAttribute('target');
-
-      // call app loader if available
-      const slug = a.dataset.slug || href.split('/').filter(Boolean).pop();
-      if (!slug) { console.warn('no slug found'); return; }
-      // show minimal in-chat feedback
-      const chat = document.querySelector('#chat-box');
-      if (chat && !document.getElementById('group-loading-temp')) {
-        const d = document.createElement('div'); d.id='group-loading-temp'; d.className='chat-message bot'; d.innerText = '...loading group '+slug;
-        chat.appendChild(d);
-      }
-      // try to call existing loaders
-      (async ()=>{
-        const token = localStorage.getItem('jwt_token');
-        if (!token) { console.warn('no jwt'); return; }
-        try {
-          const res = await fetch((window.backendURL||'') + '/api/coops/'+slug, { headers: { Authorization: 'Bearer '+token }});
-          if (!res.ok) { console.warn('fetch failed', res.status); return; }
-          const group = await res.json();
-          console.log('GROUP LOADED (capture test):', group);
-          if (typeof loadGroup === 'function') loadGroup(slug, group);
-          else if (typeof openGroupInChat === 'function') openGroupInChat(group);
-          else {
-            const hdr = document.getElementById('chat-header-title') || document.querySelector('.card-header');
-            if (hdr) hdr.textContent = group.name || slug;
-          }
-        } catch(err){ console.error(err); }
-        // cleanup loading msg
-        const ld = document.getElementById('group-loading-temp'); if (ld) ld.remove();
-      })();
-
-    }catch(err){ console.error(err); }
-  }
-  // add in capture phase to run before other handlers
-  window.addEventListener('click', handle, true);
-  console.log('Capture-phase group interceptor installed (temporary).');
-})();
-
-
-
   // ---------------- Logout handler ----------------
   const logoutBtn = el('#logout-btn');
   if (logoutBtn) {
