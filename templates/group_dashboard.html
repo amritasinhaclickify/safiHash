@@ -608,6 +608,7 @@ async function loadDeposits() {
     const res = await authFetch(`/api/coops/${SLUG}/deposits`);
     if (!res) return;
     const rows = await res.json();
+    rows.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     const body = document.getElementById("depositsBody");
     body.innerHTML = "";
 
@@ -634,6 +635,7 @@ async function loadLoans() {
     const res = await authFetch(`/api/coops/${SLUG}/loans/with-repayments`);
     if (!res) return;
     const rows = await res.json();
+    rows.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     const body = document.getElementById("loansBody");
     body.innerHTML = "";
 
@@ -661,6 +663,7 @@ async function loadVotes() {
     const res = await authFetch(`/api/coops/${SLUG}/votes`);
     if (!res) return;
     const rows = await res.json();
+    rows.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     const body = document.getElementById("votesBody");
     body.innerHTML = "";
 
