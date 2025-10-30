@@ -631,7 +631,7 @@ async function loadDeposits() {
 <!-- 5. Loans -->
 <script>
 async function loadLoans() {
-    const res = await authFetch(`/api/coops/${SLUG}/loans`);
+    const res = await authFetch(`/api/coops/${SLUG}/loans/with-repayments`);
     if (!res) return;
     const rows = await res.json();
     const body = document.getElementById("loansBody");
@@ -648,8 +648,9 @@ async function loadLoans() {
         body.appendChild(tr);
     });
 
+    // count only loans still outstanding
     document.getElementById("sumLoans").textContent =
-        rows.filter(r => r.status === "approved").length;
+        rows.filter(r => r.outstanding > 0).length;
 }
 </script>
 
