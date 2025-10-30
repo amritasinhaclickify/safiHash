@@ -49,7 +49,7 @@ It also includes an **Offline Transaction & Retry System** that safely re-proces
 
 ## 📂 Project Structure
 
-````plaintext
+```plaintext
 safihash/
 │
 ├── app.py                        # Flask entrypoint
@@ -66,7 +66,7 @@ safihash/
 │
 ├── instance/safichain.db          # Demo DB (test data only)
 └── frontend/                      # Optional React/JS build (if used)
-
+```
 
 ---
 
@@ -79,18 +79,18 @@ safihash/
 Below are the keys required for Render or local `.env` setup
 (Use dummy/test values for offline runs — no private keys should be shared):
 
-| Key | Purpose |
-|------|----------|
-| SECRET_KEY, JWT_SECRET_KEY | Flask session + JWT auth |
-| HEDERA_OPERATOR_ID, HEDERA_OPERATOR_KEY, HEDERA_PUBLIC_KEY | Operator account (Testnet) |
-| HEDERA_NETWORK | Set to testnet |
-| BHC_TOKEN_ID, BHC_TOKEN_EVM, BHC_DECIMALS | Demo token details |
-| VAULT_EVM | Co-op group vault address |
-| COOPTRUST_CONTRACT | Smart contract address for Trust Score |
-| KYC_NFT_ID | NFT used for KYC proof |
-| ENABLE_HEDERA | Toggle Hedera integration (on/off) |
-| MPESA_CONSUMER_KEY, MPESA_CONSUMER_SECRET, MPESA_SHORTCODE, MPESA_ENV | M-Pesa sandbox keys |
-| PRODUCTION | false → testnet mode |
+| Key                                                                   | Purpose                                |
+| --------------------------------------------------------------------- | -------------------------------------- |
+| SECRET_KEY, JWT_SECRET_KEY                                            | Flask session + JWT auth               |
+| HEDERA_OPERATOR_ID, HEDERA_OPERATOR_KEY, HEDERA_PUBLIC_KEY            | Operator account (Testnet)             |
+| HEDERA_NETWORK                                                        | Set to testnet                         |
+| BHC_TOKEN_ID, BHC_TOKEN_EVM, BHC_DECIMALS                             | Demo token details                     |
+| VAULT_EVM                                                             | Co-op group vault address              |
+| COOPTRUST_CONTRACT                                                    | Smart contract address for Trust Score |
+| KYC_NFT_ID                                                            | NFT used for KYC proof                 |
+| ENABLE_HEDERA                                                         | Toggle Hedera integration (on/off)     |
+| MPESA_CONSUMER_KEY, MPESA_CONSUMER_SECRET, MPESA_SHORTCODE, MPESA_ENV | M-Pesa sandbox keys                    |
+| PRODUCTION                                                            | false → testnet mode                   |
 
 🧩 **All environment variables are already configured in Render.**
 
@@ -124,7 +124,7 @@ python app.py
 ---
 
 Ye block GitHub par bilkul aligned aur readable dikhega — tables, emojis aur code blocks sab proper Markdown me render honge 💎
-
+```
 
 ---
 
@@ -138,6 +138,7 @@ CMD gunicorn -w 1 -b 0.0.0.0:$PORT app:app
 
 ✅ Expose port: handled automatically via $PORT
 ✅ Environment variables: injected in Render settings (see table above)
+```
 
 ## 🧪 Judge Testing Guide
 
@@ -201,11 +202,11 @@ A background scheduler automatically retries failed transactions until confirmed
 
 ## 🧩 Troubleshooting
 
-| Issue | Solution |
-|--------|-----------|
-| HTS transfer fails | Ensure enough HBAR for fees & token association |
-| KYC hash mismatch | Re-upload file and verify hash |
-| 3rd-party repayment pending | Admin approves via `approve payment <id>` |
+| Issue                       | Solution                                        |
+| --------------------------- | ----------------------------------------------- |
+| HTS transfer fails          | Ensure enough HBAR for fees & token association |
+| KYC hash mismatch           | Re-upload file and verify hash                  |
+| 3rd-party repayment pending | Admin approves via `approve payment <id>`       |
 
 ## 🧱 For AI Judging & Repo Analysis
 
@@ -231,4 +232,7 @@ for the **Hedera × DoraHacks Hackathon 2025**
 
 📜 Licensed under **MIT** (for educational/demo use)
 © 2025 Amrita Sinha. All rights reserved.
-````
+
+```
+
+```
