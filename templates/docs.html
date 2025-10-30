@@ -16,6 +16,19 @@
     .warn { color:#b45309; font-weight:600; }
     .ok { color:#065f46; font-weight:600; }
   </style>
+  <style>
+.copybtn {
+  font-size: 0.75rem;
+  padding: 0 6px;
+  line-height: 1.2;
+  margin-left: 4px;
+}
+pre.code {
+  font-family: monospace;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+}
+</style>
 </head>
 <body>
   <div class="container">
@@ -88,8 +101,8 @@
 
 
   <p class="muted">
-    For testing, KYC IDs in the range <strong>GH123401 to GH123425</strong> are already pre-verified.  
-    You can continue using new IDs in the same format (e.g., <em>GH123426, GH123427…</em>).
+    For testing, KYC IDs in the range <strong>GH123401 to GH123426</strong> are already pre-verified.  
+    You can continue using new IDs in the same format (e.g., <em>GH123427, GH123428…</em>).
   </p>
 
   <p class="muted">
@@ -135,7 +148,7 @@
          <p class="muted">
           The SafiHash demo uses the <strong>M-Pesa Sandbox</strong> to simulate real-world payments safely.
           Users can register and pay using <strong>simulated M-Pesa numbers</strong>
-          (for example: <em>254700000001 to 254700000025</em> are already registered;
+          (for example: <em>254700000001 to 254700000026</em> are already registered;
           you can continue from the next numbers in sequence).
         </p>
 
@@ -260,18 +273,18 @@
         All supported commands are listed in the 📖 <strong>Chat Commands Guidelines</strong> section for easy reference.
       </p>
 
-      <pre class="code">
-testuser01@example.com    / testuser01
-testuser02@example.com    / testuser02
-testuser03@example.com    / testuser03
-testuser04@example.com    / testuser04
-testuser05@example.com    / testuser05
-testuser06@example.com    / testuser06
-testuser07@example.com    / testuser07
-testuser08@example.com    / testuser08
-testuser09@example.com    / testuser09
-testuser10@example.com    / testuser10
-      </pre>
+<pre class="code" id="userList">
+testuser01@example.com 📋 / testuser01 📋
+testuser02@example.com 📋 / testuser02 📋
+testuser03@example.com 📋 / testuser03 📋
+testuser04@example.com 📋 / testuser04 📋
+testuser05@example.com 📋 / testuser05 📋
+testuser06@example.com 📋 / testuser06 📋
+testuser07@example.com 📋 / testuser07 📋
+testuser08@example.com 📋 / testuser08 📋
+testuser09@example.com 📋 / testuser09 📋
+testuser10@example.com 📋 / testuser10 📋
+</pre>
 
       <p class="warn">
         Note: These 10 accounts are provided to judges with KYC already set to <code>verified</code> for testing. 
@@ -522,6 +535,46 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const pre = document.getElementById('userList');
+
+  // Replace 📋 symbols with proper buttons
+  pre.innerHTML = pre.innerHTML.replace(/📋/g, '<button class="btn btn-sm btn-outline-secondary copybtn">📋</button>');
+
+  // Event delegation for copy clicks
+  document.addEventListener('click', async e => {
+    if (!e.target.classList.contains('copybtn')) return;
+
+    const line = e.target.parentNode.textContent;
+    const parts = line.split('/');
+    let textToCopy = '';
+
+    if (e.target.previousSibling && e.target.previousSibling.textContent.includes('@')) {
+      // left side button — copy email
+      textToCopy = parts[0].trim();
+    } else {
+      // right side button — copy password
+      textToCopy = parts[1].trim();
+    }
+
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      e.target.textContent = '✅';
+      e.target.classList.remove('btn-outline-secondary');
+      e.target.classList.add('btn-success');
+      setTimeout(() => {
+        e.target.textContent = '📋';
+        e.target.classList.add('btn-outline-secondary');
+        e.target.classList.remove('btn-success');
+      }, 1000);
+    } catch (err) {
+      alert('Clipboard copy failed');
+    }
+  });
+});
+</script>
+
 
 </body>
 </html>
