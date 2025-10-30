@@ -649,7 +649,7 @@ async function loadLoans() {
     });
 
     document.getElementById("sumLoans").textContent =
-        rows.filter(r => ["approved", "disbursed", "active"].includes(r.status)).length;
+        rows.filter(r => ["approved","disbursed","active"].includes(r.status) && r.status !== "closed").length;
 }
 </script>
 
