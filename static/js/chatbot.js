@@ -300,6 +300,59 @@ if (file) {
   // ---------------- Simple appendMessage exposure for older code ----------------
   // Keep a globally available appendMessage for other inline scripts that expect it.
   window.appendMessage = appendMessage;
+  // ---- intercept group links and load in-chat (SPA style) ----
+// Paste this right after: window.appendMessage = appendMessage;
+document.addEventListener('click', async function (e) {
+  const a = e.target.closest && e.target.closest('a.group-link');
+  if (!a) return;
+  e.preventDefault();
+
+  // Determine slug (prefer data-slug)
+  const slug = a.dataset.slug || (a.getAttribute('href') || '').split('/').filter(Boolean).pop();
+  if (!slug) {
+    appendMessage('bot', 'Group link invalid.');
+    return;
+  }
+
+  appendMessage('bot', `...loading group ${slug}`);
+
+  const token = localStorage.getItem('jwt_token');
+  if (!token) {
+    appendMessage('bot', 'Not authenticated — please login.');
+    return;
+  }
+
+  try {
+    const res = await fetch((backendURL || '') + `/api/coops/${slug}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      console.warn('Group fetch failed', res.status, txt);
+      appendMessage('bot', `Failed to load group (${res.status}).`);
+      return;
+    }
+
+    const group = await res.json();
+
+    // Prefer existing loader if present
+    if (typeof loadGroup === 'function') {
+      loadGroup(slug, group);
+    } else if (typeof openGroupInChat === 'function') {
+      openGroupInChat(group);
+    } else {
+      // fallback: update header + notify user
+      const hdr = document.getElementById('chat-header-title') || document.querySelector('.card-header');
+      if (hdr) hdr.textContent = group.name || slug;
+      appendMessage('bot', `Loaded group: ${group.name || slug}`);
+    }
+  } catch (err) {
+    console.error('Error loading group', err);
+    appendMessage('bot', 'Error loading group — check console.');
+  }
+});
+
 
   // ---------------- Logout handler ----------------
   const logoutBtn = el('#logout-btn');
