@@ -39,7 +39,6 @@ Database: SQLite (embedded demo)
 Deployment: Docker on Render
 Scheduler: APScheduler (for retries, cron jobs)
 
-📂 Project Structure
 safihash/
 │
 ├── app.py # Flask entrypoint
@@ -189,7 +188,7 @@ Judges can run locally or directly test online version.
 ## 🎥 Pitch Deck & Certification
 
 - [Pitch Deck (Google Slides)](https://drive.google.com/your-pitch-link)
-- [📄 Hashgraph Developer Certification (View PDF)](docs/Hashgraph_Developer_Certificate_AmritaSinha.pdf)
+- [📄 Hashgraph Developer Certification (Google Drive PDF)](https://drive.google.com/file/d/1CnBRK_EjlyB5Xkr7vW1l9C1qTq_Pqemq/view?usp=sharing)
 
 🏁 Credits & License
 
