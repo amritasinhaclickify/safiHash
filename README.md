@@ -249,6 +249,7 @@ Judges can **run locally** or **directly test the online version**.
 
 - [🎞️ Demo Video (YouTube)](https://youtu.be/2fUWd4pTxbo?si=-R6AYPDj0jce4lx3)
 - [📄 Hashgraph Developer Certification (Google Drive PDF)](https://drive.google.com/file/d/1CnBRK_EjlyB5Xkr7vW1l9C1qTq_Pqemq/view?usp=sharing)
+- [📊 Pitch Deck (Google Slides)](https://docs.google.com/presentation/d/152sFv_OZma6W5Q4LZOr16y0aASZVPGM2DN0FXodJhew/edit?usp=sharing)
 
 ---
 
