@@ -203,7 +203,7 @@ Admins can sync on-chain scores via:
 push trustscore <user_id> <group_slug>
 ```
 
-## Like modern banking, continuous refinement in risk logic keeps SafiHash transparent, modular, and upgrade-ready.
+Like modern banking, continuous refinement in risk logic keeps SafiHash transparent, modular, and upgrade-ready.
 
 ## 🧾 Offline Transaction & Retry System
 
