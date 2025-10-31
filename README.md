@@ -221,39 +221,34 @@ A background scheduler automatically retries failed transactions until confirmed
 
 ✅ **No payment or audit event is ever lost.**
 
-```
-
 ---
 
 ## 🧩 Troubleshooting
 
 ```
-
 | Issue                       | Solution                                        |
 | --------------------------- | ----------------------------------------------- |
 | HTS transfer fails          | Ensure enough HBAR for fees & token association |
 | KYC hash mismatch           | Re-upload file and verify hash                  |
 | 3rd-party repayment pending | Admin approves via `approve payment <id>`       |
-
 ```
 
 ---
 
-<h2>🧱 For AI Judging & Repo Analysis</h2>
+## 🧱 For AI Judging & Repo Analysis
 
-<p>This repository is <strong>public</strong> and freshly created for the hackathon.</p>
+```
+This repository is **public** and freshly created for the hackathon.
 
-<ul>
-  <li>✅ <code>Hackathon@hashgraph-association.com</code> has been added as a collaborator.</li>
-  <li>🔒 <code>.env</code> and private keys are excluded from the repo.</li>
-  <li>🧩 <code>safichain.db</code> includes only <strong>test/demo data</strong>.</li>
-  <li>📁 Unused modules: <code>company</code>, <code>ngo</code>, and <code>user_dashboard</code> – safe to ignore.</li>
-  <li>🌐 Frontend automatically connects to the Render backend:
-    <a href="https://safihash.onrender.com" target="_blank">https://safihash.onrender.com</a>.
-  </li>
-</ul>
+```
 
-<p>Judges can <strong>run locally</strong> or <strong>directly test the online version</strong>.</p>
+✅ `Hackathon@hashgraph-association.com` has been added as a collaborator.
+🔒 `.env` and private keys are excluded from the repo.
+🧩 `safichain.db` includes only **test/demo data**.
+📁 Unused modules: `company`, `ngo`, and `user_dashboard` – safe to ignore.
+🌐 Frontend automatically connects to the Render backend: [https://safihash.onrender.com](https://safihash.onrender.com).
+
+Judges can **run locally** or **directly test the online version**.
 
 ---
 
@@ -264,18 +259,15 @@ A background scheduler automatically retries failed transactions until confirmed
 
 ---
 
-<h2>🏁 Credits & License</h2>
+## 🏁 Credits & License
 
-<p>Developed by <strong>Amrita Sinha</strong><br>
-for the <strong>Hedera × DoraHacks Hackathon 2025</strong></p>
+Developed by **Amrita Sinha**  
+for the **Hedera × DoraHacks Hackathon 2025**
 
-<p>📜 Licensed under <strong>MIT</strong> (for educational/demo use)<br>
-© 2025 Amrita Sinha. All rights reserved.</p>
-
+📜 Licensed under **MIT** (for educational/demo use)  
+© 2025 Amrita Sinha. All rights reserved.
 
 ---
-
-```
 
 ```
 
