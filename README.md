@@ -121,9 +121,6 @@ flask run
 python app.py
 
 📍 Default server: http://127.0.0.1:5000
-
-
-
 ```
 
 ---
@@ -197,7 +194,7 @@ trustscore me
 ```
 Smart contract rules combine:
 
-Deposits 📈 + Repayments ⏱ + Voting 🗳 + Consistency 🧭 + Profit Share 💰
+Deposits 📈 + Repayments ⏱ + On-time Ratio ⌛ + Voting 🗳 + Loan Requests 🧾 + Approvals ✅ + Disbursal 🚀 + Self-Repayments 💪 + Third-Party Flags 🧩 + Profit Share 💰
 
 to calculate a transparent, auditable Trust Score for every member.
 
@@ -206,7 +203,7 @@ Admins can sync on-chain scores via:
 push trustscore <user_id> <group_slug>
 ```
 
----
+## Like modern banking, continuous refinement in risk logic keeps SafiHash transparent, modular, and upgrade-ready.
 
 ## 🧾 Offline Transaction & Retry System
 
