@@ -181,8 +181,6 @@ Vote / Approve / Repay:
 vote 7 yes
 repay 7 30
 
-View Trust Score:
-trustscore me
 ```
 
 💬 The chatbot interface automatically connects to the **Render backend**.

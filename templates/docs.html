@@ -385,15 +385,14 @@ vote 7 no</pre>
           <pre class="code">approve payment 12</pre>
         </li>
 
-        <li class="muted">
-          <strong>Trust Score & Alerts</strong><br>
-          Each user’s performance is tracked by a Hedera smart contract.<br>
-          Examples:
-          <pre class="code">trustscore me
-trustscore 25
-alerts farmers-union-123abc</pre>
-          Trust Score considers deposits, loan repayments, voting, and consistency.
-        </li>
+<li class="muted">
+  <strong>Trust Score (Admin Only)</strong><br>
+  Admins can manually push updated Trust Scores to the Hedera smart contract.<br>
+  Examples:
+  <pre class="code">push trustscore &lt;user_id&gt; &lt;group_slug&gt;</pre>
+  This updates on-chain trust data and syncs it with the system for transparency.
+</li>
+
       </ol>
     </div>
 
@@ -408,31 +407,22 @@ alerts farmers-union-123abc</pre>
       </ul>
     </div>
 
-    <!-- Trust score -->
-    <div class="section">
-      <h4>Trust Score (on-chain / smart contract)</h4>
-      <p class="muted">
-        The Trust Score is computed by logic implemented in a <strong>Hedera smart contract</strong> module. High-level details:
-      </p>
-      <ul class="muted">
-        <li>Score inputs: deposit history, repayment timeliness, voting participation, dispute history, and admin flags.</li>
-        <li>Computation: on relevant events (repayment recorded, deposit made, vote closed), the app writes an event / invokes the Trust Score contract which updates the user's score component.</li>
-        <li>Transparency: score changes are auditable because updates are recorded on Hedera (contract events + consensus logs).</li>
-      </ul>
+ <!-- Trust score -->
+<div class="section">
+  <h4>Trust Score (Admin Push to Smart Contract)</h4>
+  <p class="muted">
+    The Trust Score represents each member’s credibility within a cooperative group and is anchored on the
+    <strong>Hedera smart contract</strong> for transparency and auditability.
+  </p>
+  <ul class="muted">
+    <li>Score factors: deposits, repayments, voting activity, and overall consistency.</li>
+    <li>Admins can manually push updated scores to the smart contract whenever they verify group activity.</li>
+    <li>Each push updates the on-chain record and syncs it with the app’s local TrustScore table.</li>
+  </ul>
 
-      <p>In the UI you can check score via:</p>
-      <pre class="code">
-trustscore me
-trustscore &lt;user_id&gt;
-      </pre>
-
-      <p class="muted">
-        Members can view each other’s Trust Score by clicking the <strong>Trust</strong> button. 
-        This helps guide voting and must be checked before the admin issues any loans. <br>
-        Admins can push Trust Score to the smart contract using:
-        <pre class="code">push trustscore &lt;user_id&gt; &lt;group_slug&gt;</pre>
-        Example: <code>push trustscore 15 my-coop-group</code>
-      </p>
+  <p><strong>Admin Command:</strong></p>
+  <pre class="code">push trustscore &lt;user_id&gt; &lt;group_slug&gt;</pre>
+  <p class="muted">Example: <code>push trustscore 15 my-coop-group</code></p>
       <p class="muted mt-3">
   <strong>Note:</strong>  
   The Trust Score in SafiHash is derived from a simple yet robust model built around ten key banking parameters —  
