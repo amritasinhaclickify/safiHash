@@ -248,10 +248,8 @@ Judges can **run locally** or **directly test the online version**.
 
 ## 🎥 Pitch Deck & Certification
 
-```
 - [🎞️ Pitch Deck (Google Slides)](https://drive.google.com/your-pitch-link)
 - [📄 Hashgraph Developer Certification (Google Drive PDF)](https://drive.google.com/file/d/1CnBRK_EjlyB5Xkr7vW1l9C1qTq_Pqemq/view?usp=sharing)
-```
 
 ---
 
