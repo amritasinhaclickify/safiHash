@@ -144,8 +144,6 @@ CMD gunicorn -w 1 -b 0.0.0.0:$PORT app:app
 
 ## 🧪 Judge Testing Guide
 
----
-
 ### 🧍 Pre-Verified Accounts (Auto-KYC Enabled)
 
 Use any of these logins (already verified):
