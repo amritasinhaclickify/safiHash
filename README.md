@@ -121,9 +121,9 @@ flask run
 python app.py
 
 📍 Default server: http://127.0.0.1:5000
----
 
-Ye block GitHub par bilkul aligned aur readable dikhega — tables, emojis aur code blocks sab proper Markdown me render honge 💎
+
+
 ```
 
 ---
@@ -169,26 +169,26 @@ testuser10@example.com / testuser10
 Login → any test user
 
 Check wallet:
-`wallet`
+wallet
 
 Create group:
-`create group Farmers Union interest 0.1 minbalance 50 profit_reserve 10`
+create group Farmers Union interest 0.1 minbalance 50 profit_reserve 10
 
 Deposit funds:
-`deposit 100 bhc farmers-union-123abc`
+deposit 100 bhc farmers-union-123abc
 
 Request loan:
-`loan farmers-union-123abc 30 seeds purchase`
+loan farmers-union-123abc 30 seeds purchase
 
 Vote / Approve / Repay:
-`vote 7 yes`
-`repay 7 30`
+vote 7 yes
+repay 7 30
 
 View Trust Score:
-`trustscore me`
+trustscore me
+```
 
 💬 The chatbot interface automatically connects to the **Render backend**.
-```
 
 ---
 
@@ -196,9 +196,13 @@ View Trust Score:
 
 ```
 Smart contract rules combine:
+```
+
 **Deposits 📈 + Repayments ⏱ + Voting 🗳 + Consistency 🧭 + Profit Share 💰**
+
 to calculate a transparent, auditable **Trust Score** for every member.
 
+```
 Admins can sync on-chain scores via:
 
 push trustscore <user_id> <group_slug>
@@ -208,12 +212,15 @@ push trustscore <user_id> <group_slug>
 
 ## 🧾 Offline Transaction & Retry System
 
-```
 If **Hedera** or the **internet** goes offline, every pending action
 (e.g., deposit, repayment, or M-Pesa call) is **queued in an Outbox**.
 
+```
 A background scheduler automatically retries failed transactions until confirmed.
+```
+
 ✅ **No payment or audit event is ever lost.**
+
 ```
 
 ---
@@ -221,28 +228,32 @@ A background scheduler automatically retries failed transactions until confirmed
 ## 🧩 Troubleshooting
 
 ```
+
 | Issue                       | Solution                                        |
 | --------------------------- | ----------------------------------------------- |
 | HTS transfer fails          | Ensure enough HBAR for fees & token association |
 | KYC hash mismatch           | Re-upload file and verify hash                  |
 | 3rd-party repayment pending | Admin approves via `approve payment <id>`       |
+
 ```
 
 ---
 
-## 🧱 For AI Judging & Repo Analysis
+<h2>🧱 For AI Judging & Repo Analysis</h2>
 
-```
-This repository is **public** and freshly created for the hackathon.
+<p>This repository is <strong>public</strong> and freshly created for the hackathon.</p>
 
-✅ `Hackathon@hashgraph-association.com` has been added as a collaborator.
-🔒 `.env` and private keys are excluded from the repo.
-🧩 `safichain.db` includes only **test/demo data**.
-📁 Unused modules: `company`, `ngo`, and `user_dashboard` – safe to ignore.
-🌐 Frontend automatically connects to the Render backend: [https://safihash.onrender.com](https://safihash.onrender.com).
+<ul>
+  <li>✅ <code>Hackathon@hashgraph-association.com</code> has been added as a collaborator.</li>
+  <li>🔒 <code>.env</code> and private keys are excluded from the repo.</li>
+  <li>🧩 <code>safichain.db</code> includes only <strong>test/demo data</strong>.</li>
+  <li>📁 Unused modules: <code>company</code>, <code>ngo</code>, and <code>user_dashboard</code> – safe to ignore.</li>
+  <li>🌐 Frontend automatically connects to the Render backend:
+    <a href="https://safihash.onrender.com" target="_blank">https://safihash.onrender.com</a>.
+  </li>
+</ul>
 
-Judges can **run locally** or **directly test the online version**.
-```
+<p>Judges can <strong>run locally</strong> or <strong>directly test the online version</strong>.</p>
 
 ---
 
@@ -253,17 +264,18 @@ Judges can **run locally** or **directly test the online version**.
 
 ---
 
-## 🏁 Credits & License
+<h2>🏁 Credits & License</h2>
 
-```
-Developed by **Amrita Sinha**
-for the **Hedera × DoraHacks Hackathon 2025**
+<p>Developed by <strong>Amrita Sinha</strong><br>
+for the <strong>Hedera × DoraHacks Hackathon 2025</strong></p>
 
-📜 Licensed under **MIT** (for educational/demo use)
-© 2025 Amrita Sinha. All rights reserved.
-```
+<p>📜 Licensed under <strong>MIT</strong> (for educational/demo use)<br>
+© 2025 Amrita Sinha. All rights reserved.</p>
+
 
 ---
+
+```
 
 ```
 
