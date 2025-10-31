@@ -196,13 +196,11 @@ trustscore me
 
 ```
 Smart contract rules combine:
-```
 
-**Deposits 📈 + Repayments ⏱ + Voting 🗳 + Consistency 🧭 + Profit Share 💰**
+Deposits 📈 + Repayments ⏱ + Voting 🗳 + Consistency 🧭 + Profit Share 💰
 
-to calculate a transparent, auditable **Trust Score** for every member.
+to calculate a transparent, auditable Trust Score for every member.
 
-```
 Admins can sync on-chain scores via:
 
 push trustscore <user_id> <group_slug>
@@ -240,12 +238,12 @@ A background scheduler automatically retries failed transactions until confirmed
 ```
 This repository is **public** and freshly created for the hackathon.
 
+✅ Hackathon@hashgraph-association.com has been added as a collaborator.
+🔒 .env and private keys are excluded from the repo.
+🧩 safichain.db includes only test/demo data.
+📁 Unused modules: company, ngo, and user_dashboard – safe to ignore.
 ```
 
-✅ `Hackathon@hashgraph-association.com` has been added as a collaborator.
-🔒 `.env` and private keys are excluded from the repo.
-🧩 `safichain.db` includes only **test/demo data**.
-📁 Unused modules: `company`, `ngo`, and `user_dashboard` – safe to ignore.
 🌐 Frontend automatically connects to the Render backend: [https://safihash.onrender.com](https://safihash.onrender.com).
 
 Judges can **run locally** or **directly test the online version**.
