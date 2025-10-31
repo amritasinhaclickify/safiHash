@@ -140,12 +140,17 @@ CMD gunicorn -w 1 -b 0.0.0.0:$PORT app:app
 ✅ Environment variables: injected in Render settings (see table above)
 ```
 
+---
+
 ## 🧪 Judge Testing Guide
+
+---
 
 ### 🧍 Pre-Verified Accounts (Auto-KYC Enabled)
 
 Use any of these logins (already verified):
 
+```
 testuser01@example.com / testuser01
 testuser02@example.com / testuser02
 testuser03@example.com / testuser03
@@ -156,9 +161,13 @@ testuser07@example.com / testuser07
 testuser08@example.com / testuser08
 testuser09@example.com / testuser09
 testuser10@example.com / testuser10
+```
+
+---
 
 ### ✅ Quick Demo Flow
 
+```
 Login → any test user
 
 Check wallet:
@@ -181,9 +190,13 @@ View Trust Score:
 `trustscore me`
 
 💬 The chatbot interface automatically connects to the **Render backend**.
+```
+
+---
 
 ## 🧮 Trust Score Logic (On-Chain)
 
+```
 Smart contract rules combine:
 **Deposits 📈 + Repayments ⏱ + Voting 🗳 + Consistency 🧭 + Profit Share 💰**
 to calculate a transparent, auditable **Trust Score** for every member.
@@ -191,25 +204,37 @@ to calculate a transparent, auditable **Trust Score** for every member.
 Admins can sync on-chain scores via:
 
 push trustscore <user_id> <group_slug>
+```
+
+---
 
 ## 🧾 Offline Transaction & Retry System
 
+```
 If **Hedera** or the **internet** goes offline, every pending action
 (e.g., deposit, repayment, or M-Pesa call) is **queued in an Outbox**.
 
 A background scheduler automatically retries failed transactions until confirmed.
 ✅ **No payment or audit event is ever lost.**
+```
+
+---
 
 ## 🧩 Troubleshooting
 
+```
 | Issue                       | Solution                                        |
 | --------------------------- | ----------------------------------------------- |
 | HTS transfer fails          | Ensure enough HBAR for fees & token association |
 | KYC hash mismatch           | Re-upload file and verify hash                  |
 | 3rd-party repayment pending | Admin approves via `approve payment <id>`       |
+```
+
+---
 
 ## 🧱 For AI Judging & Repo Analysis
 
+```
 This repository is **public** and freshly created for the hackathon.
 
 ✅ `Hackathon@hashgraph-association.com` has been added as a collaborator.
@@ -219,19 +244,30 @@ This repository is **public** and freshly created for the hackathon.
 🌐 Frontend automatically connects to the Render backend: [https://safihash.onrender.com](https://safihash.onrender.com).
 
 Judges can **run locally** or **directly test the online version**.
+```
+
+---
 
 ## 🎥 Pitch Deck & Certification
 
+```
 - [🎞️ Pitch Deck (Google Slides)](https://drive.google.com/your-pitch-link)
 - [📄 Hashgraph Developer Certification (Google Drive PDF)](https://drive.google.com/file/d/1CnBRK_EjlyB5Xkr7vW1l9C1qTq_Pqemq/view?usp=sharing)
+```
+
+---
 
 ## 🏁 Credits & License
 
+```
 Developed by **Amrita Sinha**
 for the **Hedera × DoraHacks Hackathon 2025**
 
 📜 Licensed under **MIT** (for educational/demo use)
 © 2025 Amrita Sinha. All rights reserved.
+```
+
+---
 
 ```
 
